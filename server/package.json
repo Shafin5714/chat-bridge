@@ -1,0 +1,22 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "backend server for chat-bridge application",
+  "main": "src/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
+  "author": "Shafin5714",
+  "type": "module",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "colors": "^1.4.0",
+    "nodemon": "^3.1.9"
+  }
+}
