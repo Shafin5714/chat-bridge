@@ -127,7 +127,7 @@ export default function ChatInterface() {
           </CardHeader>
           <Separator className="mb-4" />
           <CardContent>
-            <ScrollArea className="h-[calc(100vh-12rem)]">
+            <ScrollArea className="h-[calc(100vh-20rem)] lg:h-[calc(100vh-16rem)]">
               <div className="space-y-4">
                 {["John", "Alice"].map((contact) => (
                   <HoverCard key={contact}>
@@ -287,7 +287,7 @@ export default function ChatInterface() {
           </CardHeader>
           <Separator className="mb-4" />
           <CardContent>
-            <ScrollArea className="h-[calc(100vh-12rem)]">
+            <ScrollArea className="h-[calc(100vh-20rem)] lg:h-[calc(100vh-16rem)]">
               <div className="grid grid-cols-2 gap-2">
                 {sharedMedia.map((media, index) => (
                   <img
