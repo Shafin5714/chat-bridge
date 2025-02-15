@@ -1,10 +1,10 @@
 import "./App.css";
-import { Button } from "@/components/ui/button";
+import ChatLayout from "@/components/ChatLayout";
 
 function App() {
   return (
     <>
-      <Button>Start HERE</Button>
+      <ChatLayout />
     </>
   );
 }
