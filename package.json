@@ -1,0 +1,24 @@
+{
+  "name": "chat-bridge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shafin5714/chat-bridge.git"
+  },
+  "keywords": [],
+  "author": "Shafin5714",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Shafin5714/chat-bridge/issues"
+  },
+  "homepage": "https://github.com/Shafin5714/chat-bridge#readme",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
