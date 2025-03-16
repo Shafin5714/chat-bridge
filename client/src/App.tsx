@@ -1,10 +1,10 @@
 import "./App.css";
-import ChatLayout from "@/components/ChatLayout";
+import Chat from "@/features/chat";
 
 function App() {
   return (
     <>
-      <ChatLayout />
+      <Chat />
     </>
   );
 }

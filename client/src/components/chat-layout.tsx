@@ -118,7 +118,7 @@ export default function ChatInterface() {
 
         {/* Contacts */}
         <Card
-          className={`w-full lg:w-64 h-full ${
+          className={`w-full lg:w-80 h-full ${
             mobileView === "contacts" ? "block" : "hidden"
           } lg:block`}
         >
@@ -278,7 +278,7 @@ export default function ChatInterface() {
 
         {/* Shared Media */}
         <Card
-          className={`w-full lg:w-64 h-full ${
+          className={`w-full lg:w-80 h-full ${
             mobileView === "media" ? "block" : "hidden"
           } lg:block`}
         >
