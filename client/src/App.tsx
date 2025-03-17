@@ -1,12 +1,9 @@
 import "./App.css";
-import Chat from "@/features/chat";
+
+import { AppRoutes } from "@/routes";
 
 function App() {
-  return (
-    <>
-      <Chat />
-    </>
-  );
+  return <AppRoutes />;
 }
 
 export default App;
