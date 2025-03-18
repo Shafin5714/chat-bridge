@@ -1,4 +1,5 @@
-import { Navigate, Outlet } from "react-router";
+import { Navigate } from "react-router";
+import PrivateLayout from "@/components/PrivateLayout";
 
 // import { useAuthContext } from '@/providers';
 
@@ -6,5 +7,5 @@ export const PrivateRoute = () => {
   // const { isLoggedIn } = useAuthContext();
   const isLoggedIn = true;
 
-  return isLoggedIn ? <Outlet /> : <Navigate to="/login" />;
+  return isLoggedIn ? <PrivateLayout /> : <Navigate to="/login" />;
 };

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { Separator } from "@radix-ui/react-separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 type Props = {
   mobileView: string;
@@ -9,7 +9,7 @@ type Props = {
 function SharedMedia({ mobileView }: Props) {
   return (
     <Card
-      className={`w-full lg:w-80 h-full ${
+      className={`w-full lg:w-80 ${
         mobileView === "media" ? "block" : "hidden"
       } lg:block`}
     >
@@ -19,12 +19,91 @@ function SharedMedia({ mobileView }: Props) {
       <Separator className="mb-4" />
       <CardContent>
         <ScrollArea className="h-[calc(100vh-20rem)] lg:h-[calc(100vh-16rem)]">
-          <div className="grid grid-cols-2 gap-2">
-            <img
-              src={"/placeholder.svg"}
-              alt={`Shared media`}
-              className="w-full h-auto rounded-lg"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <img
+                src={"https://placehold.co/600x400"}
+                alt={`Shared media`}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+            <div>
+              <img
+                src={"https://placehold.co/600x400"}
+                alt={`Shared media`}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+            <div>
+              <img
+                src={"https://placehold.co/600x400"}
+                alt={`Shared media`}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+            <div>
+              <img
+                src={"https://placehold.co/600x400"}
+                alt={`Shared media`}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+            <div>
+              <img
+                src={"https://placehold.co/600x400"}
+                alt={`Shared media`}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+            <div>
+              <img
+                src={"https://placehold.co/600x400"}
+                alt={`Shared media`}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+            <div>
+              <img
+                src={"https://placehold.co/600x400"}
+                alt={`Shared media`}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+            <div>
+              <img
+                src={"https://placehold.co/600x400"}
+                alt={`Shared media`}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+            <div>
+              <img
+                src={"https://placehold.co/600x400"}
+                alt={`Shared media`}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+            <div>
+              <img
+                src={"https://placehold.co/600x400"}
+                alt={`Shared media`}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+            <div>
+              <img
+                src={"https://placehold.co/600x400"}
+                alt={`Shared media`}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+            <div>
+              <img
+                src={"https://placehold.co/600x400"}
+                alt={`Shared media`}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
           </div>
         </ScrollArea>
       </CardContent>

@@ -11,22 +11,24 @@ export const Chat = () => {
   );
 
   return (
-    <div className="h-screen bg-gray-100 p-4">
-      <div className="flex flex-col lg:flex-row h-full gap-4">
-        {/* Mobile Navigation */}
-        <MobileNavigation
-          mobileView={mobileView}
-          setMobileView={setMobileView}
-        />
+    <div>
+      <div className="bg-gray-100 p-4">
+        <div className="flex flex-col lg:flex-row h-full gap-4">
+          {/* Mobile Navigation */}
+          <MobileNavigation
+            mobileView={mobileView}
+            setMobileView={setMobileView}
+          />
 
-        {/* Contacts */}
-        <Contacts mobileView={mobileView} />
+          {/* Contacts */}
+          <Contacts mobileView={mobileView} />
 
-        {/* Chat */}
-        <ChatBody mobileView={mobileView} />
+          {/* Chat */}
+          <ChatBody mobileView={mobileView} />
 
-        {/* Shared Media */}
-        <SharedMedia mobileView={mobileView} />
+          {/* Shared Media */}
+          <SharedMedia mobileView={mobileView} />
+        </div>
       </div>
     </div>
   );

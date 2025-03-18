@@ -5,8 +5,8 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Separator } from "@radix-ui/react-separator";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Image } from "lucide-react";
@@ -89,7 +89,7 @@ export default function Chat({ mobileView }: Props) {
       </CardHeader>
       <Separator className="mb-4" />
       <CardContent className="flex-1 overflow-hidden">
-        <ScrollArea className="h-[calc(100vh-20rem)] lg:h-[calc(100vh-16rem)]">
+        <ScrollArea className="h-[calc(100vh-20rem)] lg:h-[calc(100vh-16.5rem)]">
           <div className="space-y-4 p-4">
             {messages.map((message) => (
               <div
