@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-import Contacts from "../components/Contacts";
-import ChatBody from "../components/ChatBody";
-import SharedMedia from "../components/SharedMedia";
-import MobileNavigation from "../components/MobileNAvigation";
+import ChatList from "../components/contacts";
+import ChatBody from "../components/chat-body";
+import SharedMedia from "../components/shared-media";
+import MobileNavigation from "../components/mobile-navigation";
 
 export const Chat = () => {
   const [mobileView, setMobileView] = useState<"contacts" | "chat" | "media">(
@@ -20,7 +20,7 @@ export const Chat = () => {
         />
 
         {/* Contacts */}
-        <Contacts mobileView={mobileView} />
+        <ChatList mobileView={mobileView} />
 
         {/* Chat */}
         <ChatBody mobileView={mobileView} />

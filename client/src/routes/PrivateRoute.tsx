@@ -1,5 +1,5 @@
 import { Navigate } from "react-router";
-import PrivateLayout from "@/components/PrivateLayout";
+import PrivateLayout from "@/components/private-layout";
 
 // import { useAuthContext } from '@/providers';
 

@@ -12,7 +12,7 @@ export default function Contacts({ mobileView }: Props) {
   return (
     <div>
       <Card
-        className={`w-full lg:w-80 h-full ${
+        className={`h-full w-full lg:w-80 ${
           mobileView === "contacts" ? "block" : "hidden"
         } lg:block`}
       >
@@ -23,48 +23,16 @@ export default function Contacts({ mobileView }: Props) {
         <CardContent>
           <ScrollArea className="h-[calc(100vh-20rem)] lg:h-[calc(100vh-16rem)]">
             <div className="space-y-4">
-              {[
-                "John",
-                "Alice",
-                "John",
-                "Alice",
-                "John",
-                "Alice",
-                "John",
-                "Alice",
-                "John",
-                "Alice",
-                "Alice",
-                "John",
-                "Alice",
-              ].map((contact) => (
-                <div
-                  className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer transition-colors duration-200 bg-secondary hover:bg-secondary"
-                  //   className={`flex items-center space-x-4 p-2 rounded-lg cursor-pointer transition-colors duration-200
-                  //       ${
-                  //         selectedContact === contact
-                  //           ? "bg-primary text-primary-foreground"
-                  //           : "hover:bg-secondary"
-                  //       }`}
-                  //   onClick={() => setSelectedContact(contact)}
-                >
-                  <Avatar>
-                    <AvatarImage
-                      src={`/placeholder-avatar${
-                        contact === "Alice" ? "-2" : ""
-                      }.jpg`}
-                      alt={contact}
-                    />
-                    <AvatarFallback>{contact[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">{contact}</p>
-                    <p className="text-xs text-gray-500">
-                      {contact === "John" ? "Online" : "Offline"}
-                    </p>
-                  </div>
+              <div className="flex cursor-pointer items-center space-x-4 rounded-lg bg-secondary p-2 transition-colors duration-200 hover:bg-slate-800 hover:text-white">
+                <Avatar>
+                  <AvatarImage src={""} />
+                  <AvatarFallback>{"T"}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">Test</p>
+                  <p className="text-xs text-gray-500">{"Online"}</p>
                 </div>
-              ))}
+              </div>
             </div>
           </ScrollArea>
         </CardContent>
