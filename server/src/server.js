@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import { connectDB } from "./config/db.js";
 import "colors";
 
 const app = express();
@@ -10,6 +11,9 @@ app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 5000;
 dotenv.config();
+
+// connecting to Database
+connectDB();
 
 // Start the server
 app.listen(PORT, () => {
