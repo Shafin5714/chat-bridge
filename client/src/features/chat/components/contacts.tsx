@@ -25,7 +25,10 @@ export default function Contacts({ mobileView }: Props) {
             <div className="space-y-4">
               <div className="flex cursor-pointer items-center space-x-4 rounded-lg bg-secondary p-2 transition-colors duration-200 hover:bg-slate-800 hover:text-white">
                 <Avatar>
-                  <AvatarImage src={""} />
+                  <AvatarImage
+                    src="https://picsum.photos/id/175/50/50"
+                    className="rounded-full"
+                  />
                   <AvatarFallback>{"T"}</AvatarFallback>
                 </Avatar>
                 <div>
