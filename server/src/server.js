@@ -4,6 +4,7 @@ import "colors";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { notFound, errorHandler } from "./middlewares/errorMiddleware.js";
+import routes from "./routes/index.js";
 import { connectDB } from "./config/db.js";
 
 dotenv.config();
@@ -20,6 +21,9 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(routes);
+
 app.use(notFound);
 app.use(errorHandler);
 

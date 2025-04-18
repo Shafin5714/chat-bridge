@@ -1,6 +1,13 @@
 import asyncHandler from "../middlewares/asyncHandler.js";
 import generateToken from "../utils/generateToken.js";
+import User from "../models/userModel.js";
 
+/**
+ * @route   POST /api/auth/register
+ * @desc    Register a new user and return token + user info
+ * @access  Public
+ * @returns { success, message, data: { user:{id, name, email} } }
+ */
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -23,7 +30,7 @@ export const registerUser = asyncHandler(async (req, res) => {
       success: true,
       message: "Registration successful.",
       data: {
-        _id: user._id,
+        id: user._id,
         name: user.name,
         email: user.email,
       },

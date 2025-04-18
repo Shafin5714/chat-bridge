@@ -1,10 +1,8 @@
+import { useAppSelector } from "@/store";
 import { Navigate, Outlet } from "react-router";
 
-// import { useAuthContext } from '@/providers';
-
 export const PublicRoute = () => {
-  // const { isLoggedIn } = useAuthContext();
-  const isLoggedIn = false;
+  const { userInfo } = useAppSelector((store) => store.auth);
 
-  return isLoggedIn ? <Navigate to="/" /> : <Outlet />;
+  return userInfo ? <Navigate to="/" /> : <Outlet />;
 };

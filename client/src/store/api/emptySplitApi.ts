@@ -27,7 +27,7 @@ const baseQueryWithReauth: BaseQueryFn<
   }
   return result;
 };
-export const apiSlice = createApi({
+export const emptySplitApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ["Product", "Order", "User"],
   endpoints: () => ({}),

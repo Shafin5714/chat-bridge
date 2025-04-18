@@ -7,8 +7,8 @@ import { Register } from "@/features/auth";
 
 import { PrivateRoute } from "./PrivateRoute";
 import { PublicRoute } from "./PublicRoute";
-import Error404 from "@/components/error404";
-import { Login } from "@/features/auth/pages/login";
+import Error404 from "@/components/Error404";
+import { Login } from "@/features/auth/pages/Login";
 
 export const AppRoutes = () => {
   return (

@@ -1,11 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 type UserInfo = {
-  _id: string;
-  token: string;
-  username: string;
+  id: string;
+  name: string;
   email: string;
-  image: string;
 };
 type AuthState = {
   userInfo: UserInfo | null;
@@ -23,7 +21,7 @@ export const authSlice = createSlice({
   reducers: {
     reset: () => initialState,
 
-    setData: (state, action: PayloadAction<UserInfo>) => {
+    setCredentials: (state, action: PayloadAction<UserInfo>) => {
       state.userInfo = { ...action.payload };
       // in local-storage
       localStorage.setItem("userInfo", JSON.stringify(action.payload));
