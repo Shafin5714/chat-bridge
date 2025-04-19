@@ -14,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useLoginMutation } from "@/store/api/authApi";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import {
   Form,
   FormControl,
@@ -56,6 +57,8 @@ export function Login() {
     const { email, password } = values;
     const res = await login({ email, password }).unwrap();
     if (res.success) {
+      console.log(res.message);
+      toast.success(res.message);
       navigate("/");
     }
   };

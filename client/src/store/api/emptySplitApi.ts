@@ -5,12 +5,20 @@ import type {
   FetchBaseQueryError,
 } from "@reduxjs/toolkit/query";
 import { BASE_URL } from "@/constants";
+import { toast } from "sonner";
 
 import { authSlice } from "../slices/authSlice";
 
 const baseQuery = fetchBaseQuery({
   baseUrl: BASE_URL,
 });
+
+type CustomError = {
+  status: number;
+  data: {
+    message: string;
+  };
+};
 
 const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
@@ -23,7 +31,8 @@ const baseQueryWithReauth: BaseQueryFn<
   }
 
   if (result.error) {
-    console.error(result.error);
+    console.error((result.error as CustomError).data.message);
+    toast.error((result.error as CustomError).data.message);
   }
   return result;
 };

@@ -3,13 +3,17 @@ import { Outlet } from "react-router";
 import { Button } from "./ui/button";
 import { LogOut, User, MessageSquare } from "lucide-react";
 import { useLogoutMutation } from "@/store/api/authApi";
+import { toast } from "sonner";
 
 export default function PrivateLayout() {
   // api
   const [logout] = useLogoutMutation();
 
   const handleLogout = async () => {
-    await logout().unwrap();
+    const res = await logout().unwrap();
+    if (res.success) {
+      toast.success(res.message);
+    }
   };
 
   return (

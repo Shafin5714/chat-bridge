@@ -15,6 +15,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useRegisterMutation } from "@/store/api/authApi";
 import { authSlice } from "@/store/slices";
+import { toast } from "sonner";
 
 import {
   Form,
@@ -82,6 +83,7 @@ export function Register() {
           email,
         }),
       );
+      toast.success(res.message);
       navigate("/");
     }
   };

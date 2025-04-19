@@ -21,6 +21,11 @@ type AuthResponse = {
   };
 };
 
+type LogoutResponse = {
+  success: boolean;
+  message: string;
+};
+
 export const authApi = emptySplitApi.injectEndpoints({
   endpoints: (builder) => ({
     register: builder.mutation<AuthResponse, RegisterRequest>({
@@ -37,7 +42,7 @@ export const authApi = emptySplitApi.injectEndpoints({
         body: credentials,
       }),
     }),
-    logout: builder.mutation<void, void>({
+    logout: builder.mutation<LogoutResponse, void>({
       query: () => ({
         url: "/auth/logout",
         method: "POST",
