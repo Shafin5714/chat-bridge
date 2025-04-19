@@ -5,12 +5,11 @@ import { LogOut, User, MessageSquare } from "lucide-react";
 import { useLogoutMutation } from "@/store/api/authApi";
 
 export default function PrivateLayout() {
-  // hooks
+  // api
   const [logout] = useLogoutMutation();
 
   const handleLogout = async () => {
-    const res = await logout().unwrap();
-    console.log(res);
+    await logout().unwrap();
   };
 
   return (

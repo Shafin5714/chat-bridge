@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
+import { useLoginMutation } from "@/store/api/authApi";
+import { useNavigate } from "react-router";
 import {
   Form,
   FormControl,
@@ -23,9 +24,6 @@ import {
 } from "@/components/ui/form";
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: "Name is required." }).min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
   email: z.string().min(1, { message: "Email is required." }).email({
     message: "Please enter a valid email address.",
   }),
@@ -40,6 +38,12 @@ const formSchema = z.object({
 });
 
 export function Login() {
+  // hooks
+  const navigate = useNavigate();
+
+  // api
+  const [login] = useLoginMutation();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,9 +52,13 @@ export function Login() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-  }
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const { email, password } = values;
+    const res = await login({ email, password }).unwrap();
+    if (res.success) {
+      navigate("/");
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4 sm:p-6 md:p-8">

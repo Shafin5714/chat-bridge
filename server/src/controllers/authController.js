@@ -6,7 +6,7 @@ import User from "../models/userModel.js";
 // @desc    Register a new user and return token + user info
 // @access  Public
 // @returns { success, message, data: { user:{id, name, email} } }
-export const registerUser = asyncHandler(async (req, res) => {
+export const register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
   const userExists = await User.findOne({ email });
@@ -36,6 +36,31 @@ export const registerUser = asyncHandler(async (req, res) => {
   } else {
     res.status(400);
     throw new Error("Invalid user data");
+  }
+});
+
+// @route   POST /api/auth/login
+// @desc    Login user
+// @access  Public
+// @returns { success, message, data: { user:{id, name, email} } }
+export const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (user && (await user.matchPassword(password))) {
+    generateToken(res, user._id);
+    res.json({
+      success: true,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } else {
+    res.status(401);
+    throw new Error("Invalid email or password");
   }
 });
 

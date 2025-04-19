@@ -34,6 +34,12 @@ export const authSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    builder.addMatcher(
+      authApi.endpoints.login.matchFulfilled,
+      (state, { payload }) => {
+        state.userInfo = payload.data;
+      },
+    );
     builder.addMatcher(authApi.endpoints.logout.matchFulfilled, (state) => {
       state.userInfo = null;
       localStorage.removeItem("userInfo");

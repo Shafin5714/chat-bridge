@@ -6,7 +6,12 @@ type RegisterRequest = {
   password: string;
 };
 
-type RegisterResponse = {
+type LoginRequest = {
+  email: string;
+  password: string;
+};
+
+type AuthResponse = {
   success: boolean;
   message: string;
   data: {
@@ -18,9 +23,16 @@ type RegisterResponse = {
 
 export const authApi = emptySplitApi.injectEndpoints({
   endpoints: (builder) => ({
-    register: builder.mutation<RegisterResponse, RegisterRequest>({
+    register: builder.mutation<AuthResponse, RegisterRequest>({
       query: (credentials) => ({
         url: "/auth/register",
+        method: "POST",
+        body: credentials,
+      }),
+    }),
+    login: builder.mutation<AuthResponse, LoginRequest>({
+      query: (credentials) => ({
+        url: "/auth/login",
         method: "POST",
         body: credentials,
       }),
@@ -34,4 +46,5 @@ export const authApi = emptySplitApi.injectEndpoints({
   }),
 });
 
-export const { useRegisterMutation, useLogoutMutation } = authApi;
+export const { useRegisterMutation, useLogoutMutation, useLoginMutation } =
+  authApi;
