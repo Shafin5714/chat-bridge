@@ -25,7 +25,13 @@ export const authApi = emptySplitApi.injectEndpoints({
         body: credentials,
       }),
     }),
+    logout: builder.mutation<void, void>({
+      query: () => ({
+        url: "/auth/logout",
+        method: "POST",
+      }),
+    }),
   }),
 });
 
-export const { useRegisterMutation } = authApi;
+export const { useRegisterMutation, useLogoutMutation } = authApi;

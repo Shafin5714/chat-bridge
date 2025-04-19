@@ -2,11 +2,20 @@ import { ModeToggle } from "./mode-toggle";
 import { Outlet } from "react-router";
 import { Button } from "./ui/button";
 import { LogOut, User, MessageSquare } from "lucide-react";
+import { useLogoutMutation } from "@/store/api/authApi";
 
 export default function PrivateLayout() {
+  // hooks
+  const [logout] = useLogoutMutation();
+
+  const handleLogout = async () => {
+    const res = await logout().unwrap();
+    console.log(res);
+  };
+
   return (
     <div className="h-screen">
-      <div className="px-5 py-2 h-14 flex justify-between items-center">
+      <div className="flex h-14 items-center justify-between px-5 py-2">
         <Button variant="ghost" className="text-lg">
           <MessageSquare />
           Chat Bridge
@@ -17,7 +26,7 @@ export default function PrivateLayout() {
             <User />
             Profile
           </Button>
-          <Button variant="destructive">
+          <Button variant="destructive" onClick={handleLogout}>
             <LogOut />
             Logout
           </Button>

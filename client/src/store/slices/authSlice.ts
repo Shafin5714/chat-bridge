@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { authApi } from "../api/authApi";
 
 type UserInfo = {
   id: string;
@@ -31,5 +32,11 @@ export const authSlice = createSlice({
       state.userInfo = null;
       localStorage.clear();
     },
+  },
+  extraReducers: (builder) => {
+    builder.addMatcher(authApi.endpoints.logout.matchFulfilled, (state) => {
+      state.userInfo = null;
+      localStorage.removeItem("userInfo");
+    });
   },
 });
