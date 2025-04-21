@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -43,7 +44,7 @@ export function Login() {
   const navigate = useNavigate();
 
   // api
-  const [login] = useLoginMutation();
+  const [login, { isLoading }] = useLoginMutation();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,7 +58,6 @@ export function Login() {
     const { email, password } = values;
     const res = await login({ email, password }).unwrap();
     if (res.success) {
-      console.log(res.message);
       toast.success(res.message);
       navigate("/");
     }
@@ -108,7 +108,12 @@ export function Login() {
                 />
               </div>
 
-              <Button className="mt-7 h-10 w-full sm:h-11" type="submit">
+              <Button
+                className="mt-7 h-10 w-full sm:h-11"
+                type="submit"
+                disabled={isLoading}
+              >
+                {isLoading ? <Loader2 className="animate-spin" /> : null}
                 Login
               </Button>
             </form>

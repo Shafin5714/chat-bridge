@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -53,7 +54,7 @@ export function Register() {
   const dispatch = useAppDispatch();
 
   // apis
-  const [registerUser] = useRegisterMutation();
+  const [registerUser, { isLoading }] = useRegisterMutation();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -165,7 +166,12 @@ export function Register() {
                 />
               </div>
 
-              <Button className="mt-7 h-10 w-full sm:h-11" type="submit">
+              <Button
+                className="mt-7 h-10 w-full sm:h-11"
+                type="submit"
+                disabled={isLoading}
+              >
+                {isLoading ? <Loader2 className="animate-spin" /> : null}
                 Create account
               </Button>
             </form>
