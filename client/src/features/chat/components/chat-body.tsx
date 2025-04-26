@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, ChangeEvent } from "react";
 import {
   Card,
   CardContent,
@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Image } from "lucide-react";
+import { Send, Image, X } from "lucide-react";
 import { useAppSelector } from "@/store";
 
 type Props = {
@@ -17,7 +17,13 @@ type Props = {
 };
 
 export default function Chat({ mobileView }: Props) {
+  // states
+  const [text, setText] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string>("");
   const { selectedUser } = useAppSelector((state) => state.user);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const [messages, setMessages] = React.useState([
     { id: 1, sender: "John", content: "Hey there!", timestamp: "10:00 AM" },
     {
@@ -60,23 +66,29 @@ export default function Chat({ mobileView }: Props) {
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setMessages([
-        ...messages,
-        {
-          id: messages.length + 1,
-          sender: "John",
-          content: "Sent an image",
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          image: "/placeholder.svg?height=200&width=200",
-        },
-      ]);
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+
+    // Create a preview URL for the image
+    const url = URL.createObjectURL(file);
+    setImagePreview(url);
+  };
+
+  const handleRemove = (): void => {
+    // Clean up the object URL to prevent memory leaks
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
     }
+
+    // Reset the file input value
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    setImagePreview("");
   };
 
   return (
@@ -90,7 +102,9 @@ export default function Chat({ mobileView }: Props) {
       </CardHeader>
       <Separator className="mb-4" />
       <CardContent className="flex-1 overflow-hidden">
-        <ScrollArea className="h-[calc(100vh-20rem)] lg:h-[calc(100vh-16.5rem)]">
+        <ScrollArea
+          className={`h-[calc(100vh-20rem)] ${imagePreview ? "lg:max-h-[calc(100vh-20rem)]" : "lg:h-[calc(100vh-16.5rem)]"}`}
+        >
           <div className="space-y-4 p-4">
             {messages.map((message) => (
               <div
@@ -124,42 +138,60 @@ export default function Chat({ mobileView }: Props) {
         </ScrollArea>
       </CardContent>
       <Separator />
-      <CardFooter className="p-4">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSendMessage();
-          }}
-          className="flex w-full space-x-2"
-        >
-          <Input
-            type="text"
-            placeholder="Type a message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            className="flex-1"
-          />
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="hidden"
-            id="image-upload"
-          />
-          <Button
-            type="button"
-            size="icon"
-            variant="outline"
-            onClick={() => document.getElementById("image-upload")?.click()}
+      <CardFooter className="flex flex-col items-end p-2">
+        <div className="w-full p-1">
+          {imagePreview ? (
+            <div className="relative max-h-16 w-16 rounded-sm border border-solid border-gray-400">
+              <Button
+                variant="destructive"
+                size="icon"
+                className="absolute right-[-5px] top-[-5px] m-0 h-5 w-5 rounded-xl p-1"
+                onClick={handleRemove}
+              >
+                <X />
+              </Button>
+              <img src={imagePreview} alt="image preview" />
+            </div>
+          ) : null}
+        </div>
+        <div className="w-full">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage();
+            }}
+            className="flex w-full space-x-2"
           >
-            <Image className="h-4 w-4" />
-            <span className="sr-only">Upload image</span>
-          </Button>
-          <Button type="submit" size="icon">
-            <Send className="h-4 w-4" />
-            <span className="sr-only">Send message</span>
-          </Button>
-        </form>
+            <Input
+              type="text"
+              placeholder="Type a message..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="flex-1"
+            />
+
+            <div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+              >
+                <Image />
+              </Button>
+            </div>
+            <Button type="submit" size="icon">
+              <Send className="h-4 w-4" />
+              <span className="sr-only">Send message</span>
+            </Button>
+          </form>
+        </div>
       </CardFooter>
     </Card>
   );

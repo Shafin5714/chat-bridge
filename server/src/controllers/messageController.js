@@ -17,3 +17,13 @@ export const getUsers = asyncHandler(async (req, res) => {
     data: filteredUsers,
   });
 });
+
+// @route   GET /api/message/send/:id
+// @desc    Get user messages
+// @access  Private
+export const sendMessage = asyncHandler(async (req, res) => {
+  const { text, image } = req.body;
+  const { id: receiverId } = req.params;
+  const { senderId } = req.user._id;
+  console.log(text, image, senderId, receiverId);
+});
