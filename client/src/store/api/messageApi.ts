@@ -12,6 +12,16 @@ type UserResponse = {
   }[];
 };
 
+type SendMessageRequest = {
+  senderId: string;
+  text: string;
+  image: string;
+};
+
+type SendMessageResponse = {
+  _id: string;
+};
+
 export const messageApi = emptySplitApi.injectEndpoints({
   endpoints: (builder) => ({
     getUsers: builder.query<UserResponse, void>({
@@ -19,7 +29,17 @@ export const messageApi = emptySplitApi.injectEndpoints({
       providesTags: ["Users"],
       transformResponse: (response: UserResponse) => response,
     }),
+    sendMessage: builder.mutation<SendMessageResponse, SendMessageRequest>({
+      query: (data) => ({
+        url: `/message/send/${data.senderId}`,
+        method: "POST",
+        body: {
+          text: data.text,
+          image: data.image,
+        },
+      }),
+    }),
   }),
 });
 
-export const { useGetUsersQuery } = messageApi;
+export const { useGetUsersQuery, useSendMessageMutation } = messageApi;

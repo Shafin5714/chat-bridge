@@ -1,4 +1,4 @@
-import React, { useState, useRef, ChangeEvent } from "react";
+import React, { useState, useRef, ChangeEvent, FormEvent } from "react";
 import {
   Card,
   CardContent,
@@ -11,20 +11,27 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Image, X } from "lucide-react";
 import { useAppSelector } from "@/store";
+import { toast } from "sonner";
+import { useSendMessageMutation } from "@/store/api/messageApi";
 
 type Props = {
   mobileView: string;
 };
 
 export default function Chat({ mobileView }: Props) {
+  // api
+  const [sendMessage] = useSendMessageMutation();
+
   // states
   const [text, setText] = useState<string>("");
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>(
+    null,
+  );
   const { selectedUser } = useAppSelector((state) => state.user);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [messages, setMessages] = React.useState([
+  const [messages] = React.useState([
     { id: 1, sender: "John", content: "Hey there!", timestamp: "10:00 AM" },
     {
       id: 2,
@@ -46,49 +53,40 @@ export default function Chat({ mobileView }: Props) {
       image: "/placeholder.svg?height=200&width=200",
     },
   ]);
-  const [newMessage, setNewMessage] = React.useState("");
-
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      setMessages([
-        ...messages,
-        {
-          id: messages.length + 1,
-          sender: "John",
-          content: newMessage,
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        },
-      ]);
-      setNewMessage("");
-    }
-  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     const file = files[0];
+    if (!file.type.startsWith("image")) {
+      toast.error("Please select an image file.");
+      return;
+    }
 
-    // Create a preview URL for the image
-    const url = URL.createObjectURL(file);
-    setImagePreview(url);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleRemove = (): void => {
-    // Clean up the object URL to prevent memory leaks
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview);
-    }
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
-    // Reset the file input value
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  const handleSendMessage = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!text.trim() && !imagePreview) return;
 
-    setImagePreview("");
+    const res = await sendMessage({
+      senderId: selectedUser?._id as string,
+      text,
+      image: imagePreview as string,
+    }).unwrap();
+
+    console.log(res);
   };
 
   return (
@@ -150,7 +148,7 @@ export default function Chat({ mobileView }: Props) {
               >
                 <X />
               </Button>
-              <img src={imagePreview} alt="image preview" />
+              <img src={imagePreview as string} alt="image preview" />
             </div>
           ) : null}
         </div>
@@ -158,7 +156,7 @@ export default function Chat({ mobileView }: Props) {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleSendMessage();
+              handleSendMessage(e);
             }}
             className="flex w-full space-x-2"
           >

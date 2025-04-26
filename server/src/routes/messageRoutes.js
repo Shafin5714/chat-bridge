@@ -5,6 +5,6 @@ import { protect } from "../middlewares/authMiddleware.js";
 const router = Router();
 
 router.route("/users").get(protect, getUsers);
-router.route("/send/:id").get(protect, sendMessage);
+router.route("/send/:id").post(protect, sendMessage);
 
 export default router;
