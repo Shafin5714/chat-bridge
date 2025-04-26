@@ -38,6 +38,8 @@ export const authSlice = createSlice({
       authApi.endpoints.login.matchFulfilled,
       (state, { payload }) => {
         state.userInfo = payload.data;
+        // in local-storage
+        localStorage.setItem("userInfo", JSON.stringify(payload.data));
       },
     );
     builder.addMatcher(authApi.endpoints.logout.matchFulfilled, (state) => {

@@ -1,6 +1,10 @@
 import asyncHandler from "../middlewares/asyncHandler.js";
 import User from "../models/userModel.js";
 
+// @route   GET /api/message/users
+// @desc    Get all users except the logged in user
+// @access  Private
+// @returns { success, data: {_id, email, name, profilePic, createdAt, updatedAt}[]}
 export const getUsers = asyncHandler(async (req, res) => {
   const loggedInUser = req.user._id;
 

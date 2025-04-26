@@ -10,12 +10,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Image } from "lucide-react";
+import { useAppSelector } from "@/store";
 
 type Props = {
   mobileView: string;
 };
 
 export default function Chat({ mobileView }: Props) {
+  const { selectedUser } = useAppSelector((state) => state.user);
   const [messages, setMessages] = React.useState([
     { id: 1, sender: "John", content: "Hey there!", timestamp: "10:00 AM" },
     {
@@ -79,13 +81,12 @@ export default function Chat({ mobileView }: Props) {
 
   return (
     <Card
-      className={`flex-1 flex flex-col h-full ${
+      className={`flex h-full flex-1 flex-col ${
         mobileView === "chat" ? "block" : "hidden"
       } lg:block`}
     >
       <CardHeader>
-        {/* <h1 className="text-2xl font-bold">Chat with {selectedContact}</h1> */}
-        <h1 className="text-2xl font-bold">Chat with</h1>
+        <h1 className="text-2xl font-bold">Chat with {selectedUser?.name}</h1>
       </CardHeader>
       <Separator className="mb-4" />
       <CardContent className="flex-1 overflow-hidden">
@@ -113,7 +114,7 @@ export default function Chat({ mobileView }: Props) {
                     />
                   )}
                   <p className="text-sm">{message.content}</p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="mt-1 text-xs text-gray-400">
                     {message.timestamp}
                   </p>
                 </div>

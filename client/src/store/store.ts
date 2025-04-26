@@ -1,12 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
-import { authSlice } from "./slices";
+import { authSlice, userSlice } from "./slices";
 
 // modules
 import { emptySplitApi } from "./api/emptySplitApi";
 export const store = configureStore({
   reducer: {
     auth: authSlice.reducer,
+    user: userSlice.reducer,
     [emptySplitApi.reducerPath]: emptySplitApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
