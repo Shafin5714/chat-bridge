@@ -13,6 +13,7 @@ import { Send, Image, X } from "lucide-react";
 import { useAppSelector } from "@/store";
 import { toast } from "sonner";
 import { useSendMessageMutation } from "@/store/api/messageApi";
+import imageCompression from "browser-image-compression";
 
 type Props = {
   mobileView: string;
@@ -54,7 +55,9 @@ export default function Chat({ mobileView }: Props) {
     },
   ]);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
+  const handleFileChange = async (
+    e: ChangeEvent<HTMLInputElement>,
+  ): Promise<void> => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -64,11 +67,13 @@ export default function Chat({ mobileView }: Props) {
       return;
     }
 
+    const compressedFile = await compressImage(file);
+
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(compressedFile);
   };
 
   const handleRemove = (): void => {
@@ -87,6 +92,32 @@ export default function Chat({ mobileView }: Props) {
     }).unwrap();
 
     console.log(res);
+  };
+
+  const compressImage = async (file: File) => {
+    const options = {
+      maxSizeMB: 1, // Max size (in MB) after compression
+      maxWidthOrHeight: 1024, // Max width or height
+      useWebWorker: true, // Use web workers for faster compression
+    };
+
+    try {
+      const compressedFile = await imageCompression(file, options);
+      console.log(
+        "Original file size:",
+        (file.size / 1024 / 1024).toFixed(2),
+        "MB",
+      );
+      console.log(
+        "Compressed file size:",
+        (compressedFile.size / 1024 / 1024).toFixed(2),
+        "MB",
+      );
+      return compressedFile;
+    } catch (error) {
+      console.error("Compression failed:", error);
+      return file; // fallback to original file
+    }
   };
 
   return (
