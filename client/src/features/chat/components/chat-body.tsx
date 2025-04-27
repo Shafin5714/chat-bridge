@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Image, X } from "lucide-react";
+import { Send, Image, X, Loader2 } from "lucide-react";
 import { useAppSelector } from "@/store";
 import { toast } from "sonner";
 import { useSendMessageMutation } from "@/store/api/messageApi";
@@ -21,7 +21,7 @@ type Props = {
 
 export default function Chat({ mobileView }: Props) {
   // api
-  const [sendMessage] = useSendMessageMutation();
+  const [sendMessage, { isLoading }] = useSendMessageMutation();
 
   // states
   const [text, setText] = useState<string>("");
@@ -54,6 +54,32 @@ export default function Chat({ mobileView }: Props) {
       image: "/placeholder.svg?height=200&width=200",
     },
   ]);
+
+  const compressImage = async (file: File) => {
+    const options = {
+      maxSizeMB: 1, // Max size (in MB) after compression
+      maxWidthOrHeight: 1024, // Max width or height
+      useWebWorker: true, // Use web workers for faster compression
+    };
+
+    try {
+      const compressedFile = await imageCompression(file, options);
+      console.log(
+        "Original file size:",
+        (file.size / 1024 / 1024).toFixed(2),
+        "MB",
+      );
+      console.log(
+        "Compressed file size:",
+        (compressedFile.size / 1024 / 1024).toFixed(2),
+        "MB",
+      );
+      return compressedFile;
+    } catch (error) {
+      console.error("Compression failed:", error);
+      return file; // fallback to original file
+    }
+  };
 
   const handleFileChange = async (
     e: ChangeEvent<HTMLInputElement>,
@@ -91,32 +117,9 @@ export default function Chat({ mobileView }: Props) {
       image: imagePreview as string,
     }).unwrap();
 
-    console.log(res);
-  };
-
-  const compressImage = async (file: File) => {
-    const options = {
-      maxSizeMB: 1, // Max size (in MB) after compression
-      maxWidthOrHeight: 1024, // Max width or height
-      useWebWorker: true, // Use web workers for faster compression
-    };
-
-    try {
-      const compressedFile = await imageCompression(file, options);
-      console.log(
-        "Original file size:",
-        (file.size / 1024 / 1024).toFixed(2),
-        "MB",
-      );
-      console.log(
-        "Compressed file size:",
-        (compressedFile.size / 1024 / 1024).toFixed(2),
-        "MB",
-      );
-      return compressedFile;
-    } catch (error) {
-      console.error("Compression failed:", error);
-      return file; // fallback to original file
+    if (res.success) {
+      setImagePreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -215,9 +218,12 @@ export default function Chat({ mobileView }: Props) {
                 <Image />
               </Button>
             </div>
-            <Button type="submit" size="icon">
-              <Send className="h-4 w-4" />
-              <span className="sr-only">Send message</span>
+            <Button type="submit" size="icon" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </form>
         </div>

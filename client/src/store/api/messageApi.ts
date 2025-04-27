@@ -19,7 +19,7 @@ type SendMessageRequest = {
 };
 
 type SendMessageResponse = {
-  _id: string;
+  success: boolean;
 };
 
 export const messageApi = emptySplitApi.injectEndpoints({
