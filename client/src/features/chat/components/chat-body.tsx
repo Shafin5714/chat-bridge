@@ -1,4 +1,4 @@
-import React, { useState, useRef, ChangeEvent, FormEvent } from "react";
+import { useState, useRef, ChangeEvent, FormEvent, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -12,48 +12,44 @@ import { Button } from "@/components/ui/button";
 import { Send, Image, X, Loader2 } from "lucide-react";
 import { useAppSelector } from "@/store";
 import { toast } from "sonner";
-import { useSendMessageMutation } from "@/store/api/messageApi";
+import {
+  useSendMessageMutation,
+  useGetMessagesQuery,
+} from "@/store/api/messageApi";
 import imageCompression from "browser-image-compression";
+import { skipToken } from "@reduxjs/toolkit/query";
 
 type Props = {
   mobileView: string;
 };
 
 export default function Chat({ mobileView }: Props) {
-  // api
-  const [sendMessage, { isLoading }] = useSendMessageMutation();
-
   // states
   const [text, setText] = useState<string>("");
   const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>(
     null,
   );
   const { selectedUser } = useAppSelector((state) => state.user);
+  const { messages } = useAppSelector((state) => state.message);
+  const { userInfo } = useAppSelector((state) => state.auth);
+
+  // api
+  const [sendMessage, { isLoading }] = useSendMessageMutation();
+  const userId = selectedUser?._id ?? skipToken;
+  const { data } = useGetMessagesQuery(userId, {
+    refetchOnMountOrArgChange: true,
+  });
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // scroll to bottom
+  const msgEndRef = useRef<null | HTMLDivElement>(null);
+  const scrollToBottom = () => {
+    msgEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
-  const [messages] = React.useState([
-    { id: 1, sender: "John", content: "Hey there!", timestamp: "10:00 AM" },
-    {
-      id: 2,
-      sender: "Alice",
-      content: "Hi John! How are you?",
-      timestamp: "10:02 AM",
-    },
-    {
-      id: 3,
-      sender: "John",
-      content: "I'm doing great, thanks for asking!",
-      timestamp: "10:05 AM",
-    },
-    {
-      id: 4,
-      sender: "Alice",
-      content: "Check out this image!",
-      timestamp: "10:10 AM",
-      image: "/placeholder.svg?height=200&width=200",
-    },
-  ]);
+  useEffect(() => {
+    scrollToBottom();
+  }, [data, messages]);
 
   const compressImage = async (file: File) => {
     const options = {
@@ -112,7 +108,7 @@ export default function Chat({ mobileView }: Props) {
     if (!text.trim() && !imagePreview) return;
 
     const res = await sendMessage({
-      senderId: selectedUser?._id as string,
+      senderId: userInfo?.id as string,
       text,
       image: imagePreview as string,
     }).unwrap();
@@ -140,14 +136,16 @@ export default function Chat({ mobileView }: Props) {
           <div className="space-y-4 p-4">
             {messages.map((message) => (
               <div
-                key={message.id}
+                key={message._id}
                 className={`flex ${
-                  message.sender === "John" ? "justify-end" : "justify-start"
+                  message.senderId === userInfo?.id
+                    ? "justify-end"
+                    : "justify-start"
                 }`}
               >
                 <div
                   className={`max-w-[70%] rounded-lg p-3 ${
-                    message.sender === "John"
+                    message.senderId === userInfo?.id
                       ? "bg-blue-500 text-white"
                       : "bg-gray-200"
                   }`}
@@ -159,13 +157,14 @@ export default function Chat({ mobileView }: Props) {
                       className="mb-2 rounded-lg"
                     />
                   )}
-                  <p className="text-sm">{message.content}</p>
+                  <p className="text-sm">{message.text}</p>
                   <p className="mt-1 text-xs text-gray-400">
-                    {message.timestamp}
+                    {message.createdAt}
                   </p>
                 </div>
               </div>
             ))}
+            <div ref={msgEndRef} />
           </div>
         </ScrollArea>
       </CardContent>

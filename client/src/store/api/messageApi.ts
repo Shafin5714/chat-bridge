@@ -20,6 +20,15 @@ type SendMessageRequest = {
 
 type SendMessageResponse = {
   success: boolean;
+  data: {
+    _id: string;
+    createdAt: string;
+    image: string;
+    receiverId: string;
+    senderId: string;
+    text: string;
+    updatedAt: string;
+  }[];
 };
 
 export const messageApi = emptySplitApi.injectEndpoints({
@@ -39,7 +48,14 @@ export const messageApi = emptySplitApi.injectEndpoints({
         },
       }),
     }),
+    getMessages: builder.query<SendMessageResponse, string>({
+      query: (id) => ({
+        url: `/message/${id}`,
+        providesTags: ["Message"],
+      }),
+    }),
   }),
 });
 
-export const { useGetUsersQuery, useSendMessageMutation } = messageApi;
+export const { useGetUsersQuery, useSendMessageMutation, useGetMessagesQuery } =
+  messageApi;

@@ -21,7 +21,7 @@ export const getUsers = asyncHandler(async (req, res) => {
 });
 
 // @route   POST /api/message/send/:id
-// @desc    Get user messages
+// @desc    Send message
 // @access  Private
 export const sendMessage = asyncHandler(async (req, res) => {
   const { text, image } = req.body;
@@ -49,3 +49,23 @@ export const sendMessage = asyncHandler(async (req, res) => {
     data: newMessage,
   });
 });
+
+// @route   GET /api/message/:id
+// @desc    Get user messages
+// @access  Private
+export const getMessages = async (req, res) => {
+  const { id: userToChatId } = req.params;
+  const myId = req.user._id;
+
+  const messages = await Message.find({
+    $or: [
+      { senderId: myId, receiverId: userToChatId },
+      { senderId: userToChatId, receiverId: myId },
+    ],
+  });
+
+  res.status(200).json({
+    success: true,
+    data: messages,
+  });
+};
