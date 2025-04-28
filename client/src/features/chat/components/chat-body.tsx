@@ -48,7 +48,10 @@ export default function Chat({ mobileView }: Props) {
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // delay for message to load properly for scroll
+    setTimeout(() => {
+      scrollToBottom();
+    }, 500);
   }, [data, messages]);
 
   const compressImage = async (file: File) => {
@@ -108,7 +111,7 @@ export default function Chat({ mobileView }: Props) {
     if (!text.trim() && !imagePreview) return;
 
     const res = await sendMessage({
-      senderId: userInfo?.id as string,
+      receiverId: selectedUser?._id as string,
       text,
       image: imagePreview as string,
     }).unwrap();

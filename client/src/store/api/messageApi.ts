@@ -13,7 +13,7 @@ type UserResponse = {
 };
 
 type SendMessageRequest = {
-  senderId: string;
+  receiverId: string;
   text: string;
   image: string;
 };
@@ -40,7 +40,7 @@ export const messageApi = emptySplitApi.injectEndpoints({
     }),
     sendMessage: builder.mutation<SendMessageResponse, SendMessageRequest>({
       query: (data) => ({
-        url: `/message/send/${data.senderId}`,
+        url: `/message/send/${data.receiverId}`,
         method: "POST",
         body: {
           text: data.text,
