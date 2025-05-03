@@ -6,10 +6,9 @@ import cookieParser from "cookie-parser";
 import { notFound, errorHandler } from "./middlewares/errorMiddleware.js";
 import routes from "./routes/index.js";
 import { connectDB } from "./config/db.js";
+import { server, app } from "./lib/socket.js";
 
 dotenv.config();
-
-const app = express();
 
 // accept json data in body (increasing limit to 10mb)
 app.use(express.json({ limit: "10mb" }));
@@ -30,7 +29,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 // Start the server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(
     `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold
   );
