@@ -6,18 +6,29 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { userSlice } from "@/store/slices";
+import { useSocketContext } from "@/contexts/socket-context";
+import { useEffect } from "react";
 
 type Props = {
   mobileView: string;
 };
 
 export default function Contacts({ mobileView }: Props) {
+  // hooks
+  const { socket } = useSocketContext();
+  const dispatch = useAppDispatch();
+
   // api
   useGetUsersQuery();
-  const dispatch = useAppDispatch();
 
   // state
   const { userList, selectedUser } = useAppSelector((state) => state.user);
+
+  useEffect(() => {
+    socket?.on("getOnlineUsers", (data) => {
+      console.log(data);
+    });
+  }, [socket]);
 
   return (
     <div>

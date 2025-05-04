@@ -25,8 +25,11 @@ export const SocketProvider = ({ children }: Props) => {
 
   useEffect(() => {
     if (userInfo) {
-      const socket = io(BACKEND_URL);
-
+      const socket = io(BACKEND_URL, {
+        query: {
+          userId: userInfo.id,
+        },
+      });
       setSocket(socket);
     } else {
       if (socket) {
