@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Image, X, Loader2 } from "lucide-react";
-import { useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { toast } from "sonner";
 import {
   useSendMessageMutation,
@@ -18,14 +18,31 @@ import {
 } from "@/store/api/messageApi";
 import imageCompression from "browser-image-compression";
 import { skipToken } from "@reduxjs/toolkit/query";
+import { useSocketContext } from "@/contexts/socket-context";
+import { messageSlice } from "@/store/slices";
 
 type Props = {
   mobileView: string;
 };
 
+type Message = {
+  _id: string;
+  createdAt: string;
+  image: string;
+  receiverId: string;
+  senderId: string;
+  text: string;
+  updatedAt: string;
+};
+
 export default function Chat({ mobileView }: Props) {
+  // hooks
+  const { socket } = useSocketContext();
+  const dispatch = useAppDispatch();
+
   // states
   const [text, setText] = useState<string>("");
+  const [newMessage, setNewMessage] = useState<Message>();
   const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>(
     null,
   );
@@ -54,6 +71,20 @@ export default function Chat({ mobileView }: Props) {
     }, 500);
   }, [data, messages]);
 
+  useEffect(() => {
+    socket?.on("newMessage", (newMessage) => {
+      setNewMessage(newMessage);
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    const isMessageSentFromSelectedUser = newMessage?.senderId === userId;
+    if (isMessageSentFromSelectedUser) {
+      dispatch(messageSlice.actions.setMessage(newMessage));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newMessage]);
+
   const compressImage = async (file: File) => {
     const options = {
       maxSizeMB: 1, // Max size (in MB) after compression
@@ -63,16 +94,6 @@ export default function Chat({ mobileView }: Props) {
 
     try {
       const compressedFile = await imageCompression(file, options);
-      console.log(
-        "Original file size:",
-        (file.size / 1024 / 1024).toFixed(2),
-        "MB",
-      );
-      console.log(
-        "Compressed file size:",
-        (compressedFile.size / 1024 / 1024).toFixed(2),
-        "MB",
-      );
       return compressedFile;
     } catch (error) {
       console.error("Compression failed:", error);
@@ -117,8 +138,9 @@ export default function Chat({ mobileView }: Props) {
     }).unwrap();
 
     if (res.success) {
-      setImagePreview(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      handleRemove();
+      setText("");
+      dispatch(messageSlice.actions.setMessage(res.data));
     }
   };
 

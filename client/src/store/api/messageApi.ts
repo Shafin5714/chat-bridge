@@ -18,17 +18,24 @@ type SendMessageRequest = {
   image: string;
 };
 
+type Message = {
+  _id: string;
+  createdAt: string;
+  image: string;
+  receiverId: string;
+  senderId: string;
+  text: string;
+  updatedAt: string;
+};
+
 type SendMessageResponse = {
   success: boolean;
-  data: {
-    _id: string;
-    createdAt: string;
-    image: string;
-    receiverId: string;
-    senderId: string;
-    text: string;
-    updatedAt: string;
-  }[];
+  data: Message;
+};
+
+type GetMessagesResponse = {
+  success: boolean;
+  data: Message[];
 };
 
 export const messageApi = emptySplitApi.injectEndpoints({
@@ -48,7 +55,7 @@ export const messageApi = emptySplitApi.injectEndpoints({
         },
       }),
     }),
-    getMessages: builder.query<SendMessageResponse, string>({
+    getMessages: builder.query<GetMessagesResponse, string>({
       query: (id) => ({
         url: `/message/${id}`,
         providesTags: ["Message"],

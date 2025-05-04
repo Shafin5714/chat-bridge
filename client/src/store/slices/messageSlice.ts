@@ -27,6 +27,9 @@ export const messageSlice = createSlice({
     setMessages: (state, action: PayloadAction<Message[]>) => {
       state.messages = [...state.messages, ...action.payload];
     },
+    setMessage: (state, action: PayloadAction<Message>) => {
+      state.messages = [...state.messages, action.payload];
+    },
   },
   extraReducers: (builder) => {
     builder.addMatcher(

@@ -2,6 +2,7 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import User from "../models/userModel.js";
 import cloudinary from "../lib/cloudinary.js";
 import Message from "../models/messageModel.js";
+import { io, getReceiverSocketId } from "../lib/socket.js";
 
 // @route   GET /api/message/users
 // @desc    Get all users except the logged in user
@@ -45,6 +46,11 @@ export const sendMessage = asyncHandler(async (req, res) => {
   });
 
   await newMessage.save();
+
+  const receiveSocketId = getReceiverSocketId(receiverId);
+  if (receiveSocketId) {
+    io.to(receiveSocketId).emit("newMessage", newMessage);
+  }
 
   res.status(201).json({
     success: true,
