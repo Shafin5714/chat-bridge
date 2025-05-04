@@ -31,7 +31,9 @@ export const sendMessage = asyncHandler(async (req, res) => {
   let imageUrl;
   if (image) {
     // Upload base64 image to cloudinary
-    const uploadResponse = await cloudinary.uploader.upload(image);
+    const uploadResponse = await cloudinary.uploader.upload(image, {
+      folder: "chat-bridge",
+    });
     imageUrl = uploadResponse.secure_url;
   }
 
