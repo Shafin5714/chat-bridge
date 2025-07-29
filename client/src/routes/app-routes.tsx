@@ -1,12 +1,11 @@
 import { Route, Routes } from "react-router";
 
 import { Chat } from "@/features/chat";
-import { Register } from "@/features/auth";
 
 import { PrivateRoute } from "./private-route";
 import { PublicRoute } from "./public-route";
 import Error404 from "@/components/not-found";
-import { Login } from "@/features/auth/pages/login";
+import { Login, Register } from "@/features/auth";
 
 export const AppRoutes = () => {
   return (

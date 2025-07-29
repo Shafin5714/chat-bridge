@@ -19,29 +19,38 @@ const SocketContext = createContext<{
   socket: null,
 });
 
+import { useRef } from "react";
+
 export const SocketProvider = ({ children }: Props) => {
+  const socketRef = useRef<Socket | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const { userInfo } = useAppSelector((store) => store.auth);
 
   useEffect(() => {
     if (userInfo) {
-      const socket = io(BACKEND_URL, {
+      const newSocket = io(BACKEND_URL, {
         query: {
           userId: userInfo.id,
         },
+        withCredentials: true,
       });
-      setSocket(socket);
+      socketRef.current = newSocket;
+      setSocket(newSocket);
     } else {
-      if (socket) {
-        socket.close();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
         setSocket(null);
       }
     }
+
     return () => {
-      socket?.close();
-      setSocket(null);
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        setSocket(null);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userInfo]);
 
   return (

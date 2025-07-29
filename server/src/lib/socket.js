@@ -28,6 +28,19 @@ io.on("connection", (socket) => {
   //send events to all the connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
+  // typing message
+  socket.on("typingMessage", (data) => {
+    const receiverId = getReceiverSocketId(data.receiverId);
+
+    if (receiverId) {
+      socket.to(receiverId).emit("typingMessageGet", {
+        senderId: data.senderId,
+        receiverId: data.receiverId,
+        isTyping: data.isTyping,
+      });
+    }
+  });
+
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.id);
     delete userSocketMap[userId];

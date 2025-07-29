@@ -46,6 +46,16 @@ export default function Chat({ mobileView }: Props) {
   const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>(
     null,
   );
+  const [typingData, setTypingData] = useState<{
+    senderId: string;
+    receiverId: string;
+    isTyping: boolean;
+  }>({
+    senderId: "",
+    receiverId: "",
+    isTyping: false,
+  });
+  const [isTyping, setIsTyping] = useState(false);
   const { selectedUser } = useAppSelector((state) => state.user);
   const { messages } = useAppSelector((state) => state.message);
   const { userInfo } = useAppSelector((state) => state.auth);
@@ -72,9 +82,15 @@ export default function Chat({ mobileView }: Props) {
   }, [data, messages]);
 
   useEffect(() => {
-    socket?.on("newMessage", (newMessage) => {
+    const handleNewMessage = (newMessage: Message) => {
       setNewMessage(newMessage);
-    });
+    };
+
+    socket?.on("newMessage", handleNewMessage);
+
+    return () => {
+      socket?.off("newMessage", handleNewMessage);
+    };
   }, [socket]);
 
   useEffect(() => {
@@ -84,6 +100,42 @@ export default function Chat({ mobileView }: Props) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newMessage]);
+
+  useEffect(() => {
+    socket?.emit("typingMessage", {
+      senderId: userInfo?.id,
+      receiverId: userId,
+      isTyping: text.length > 0 ? true : false,
+    });
+  }, [socket, text, userId, userInfo?.id]);
+
+  useEffect(() => {
+    const handleTypingMessage = (data: {
+      senderId: string;
+      receiverId: string;
+      isTyping: boolean;
+    }) => {
+      setTypingData({
+        senderId: data.senderId,
+        receiverId: data.receiverId,
+        isTyping: data.isTyping,
+      });
+    };
+
+    socket?.on("typingMessageGet", handleTypingMessage);
+
+    return () => {
+      socket?.off("typingMessageGet", handleTypingMessage);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (typingData.senderId === userId) {
+      setIsTyping(typingData.isTyping);
+    } else {
+      setIsTyping(false);
+    }
+  }, [typingData, userId]);
 
   const compressImage = async (file: File) => {
     const options = {
@@ -189,6 +241,11 @@ export default function Chat({ mobileView }: Props) {
                 </div>
               </div>
             ))}
+            {isTyping ? (
+              <div className="max-w-[200px] rounded-lg bg-blue-500 p-3 text-white">
+                <i>Typing...</i>
+              </div>
+            ) : null}
             <div ref={msgEndRef} />
           </div>
         </ScrollArea>
