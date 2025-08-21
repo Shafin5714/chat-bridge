@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
+import { Avatar } from "@radix-ui/react-avatar";
 import { useGetUsersQuery } from "@/store/api/messageApi";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -7,7 +7,9 @@ import { Separator } from "@/components/ui/separator";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { userSlice } from "@/store/slices";
 import { useSocketContext } from "@/contexts/socket-context";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Circle, User } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Props = {
   mobileView: string;
@@ -22,11 +24,12 @@ export default function Contacts({ mobileView }: Props) {
   useGetUsersQuery();
 
   // state
+  const [onlineUsers, setOnlineUsers] = useState<string[]>([""]);
   const { userList, selectedUser } = useAppSelector((state) => state.user);
 
   useEffect(() => {
     socket?.on("getOnlineUsers", (data) => {
-      console.log(data);
+      setOnlineUsers(data);
     });
   }, [socket]);
 
@@ -50,18 +53,31 @@ export default function Contacts({ mobileView }: Props) {
                   onClick={() =>
                     dispatch(userSlice.actions.setSelectedUser(user))
                   }
-                  className={`${selectedUser?._id === user._id ? "bg-slate-800 text-white" : ""} flex cursor-pointer items-center space-x-4 rounded-lg bg-secondary p-2 transition-colors duration-200 hover:bg-slate-800 hover:text-white`}
+                  className={cn(
+                    "flex cursor-pointer items-center space-x-4 rounded-lg p-2 transition-colors duration-200",
+                    selectedUser?._id === user._id
+                      ? "bg-slate-800 text-white"
+                      : "bg-secondary",
+                    "hover:bg-slate-800 hover:text-white",
+                  )}
                 >
-                  <Avatar>
-                    <AvatarImage
-                      src="https://picsum.photos/id/175/50/50"
-                      className="rounded-full"
-                    />
-                    <AvatarFallback>{user.name[0]}</AvatarFallback>
+                  <Avatar
+                    className={cn(
+                      "rounded-full border-2 border-blue-500 p-2 hover:border-gray-400",
+                    )}
+                  >
+                    <User size={32} strokeWidth={2} />
                   </Avatar>
-                  <div>
+
+                  <div className="flex items-center gap-1">
                     <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-gray-500">{"Online"}</p>
+                    <p className="text-xs text-gray-500">
+                      {onlineUsers.includes(user._id) ? (
+                        <Circle fill="green" size={12} strokeWidth={0} />
+                      ) : (
+                        <Circle fill="red" size={12} strokeWidth={0} />
+                      )}
+                    </p>
                   </div>
                 </div>
               ))}

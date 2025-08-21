@@ -10,29 +10,29 @@ type Props = {
 
 export default function MobileNavigation({ mobileView, setMobileView }: Props) {
   return (
-    <div className="flex lg:hidden mb-4 border rounded-lg overflow-hidden">
+    <div className="flex justify-center rounded-sm bg-white lg:hidden">
       <Button
         variant={mobileView === "contacts" ? "default" : "ghost"}
-        className="flex-1"
+        className="flex-1 hover:bg-black hover:text-white"
         onClick={() => setMobileView("contacts")}
       >
-        <Users className="h-5 w-5 mr-2" />
+        <Users className="mr-2 h-5 w-5" />
         Contacts
       </Button>
       <Button
         variant={mobileView === "chat" ? "default" : "ghost"}
-        className="flex-1"
+        className="flex-1 hover:bg-black hover:text-white"
         onClick={() => setMobileView("chat")}
       >
-        <MessageSquare className="h-5 w-5 mr-2" />
+        <MessageSquare className="mr-2 h-5 w-5" />
         Chat
       </Button>
       <Button
         variant={mobileView === "media" ? "default" : "ghost"}
-        className="flex-1"
+        className="flex-1 hover:bg-black hover:text-white"
         onClick={() => setMobileView("media")}
       >
-        <Share2 className="h-5 w-5 mr-2" />
+        <Share2 className="mr-2 h-5 w-5" />
         Media
       </Button>
     </div>

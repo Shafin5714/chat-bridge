@@ -20,6 +20,8 @@ import imageCompression from "browser-image-compression";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useSocketContext } from "@/contexts/socket-context";
 import { messageSlice } from "@/store/slices";
+import moment from "moment";
+import { cn } from "@/lib/utils";
 
 type Props = {
   mobileView: string;
@@ -79,7 +81,7 @@ export default function Chat({ mobileView }: Props) {
     setTimeout(() => {
       scrollToBottom();
     }, 500);
-  }, [data, messages]);
+  }, [data, messages, isTyping]);
 
   useEffect(() => {
     const handleNewMessage = (newMessage: Message) => {
@@ -208,17 +210,18 @@ export default function Chat({ mobileView }: Props) {
       <Separator className="mb-4" />
       <CardContent className="flex-1 overflow-hidden">
         <ScrollArea
-          className={`h-[calc(100vh-20rem)] ${imagePreview ? "lg:max-h-[calc(100vh-20rem)]" : "lg:h-[calc(100vh-16.5rem)]"}`}
+          className={`h-[calc(100vh-20rem)] ${imagePreview ? "lg:max-h-[calc(100vh-20rem)]" : "lg:h-[calc(100vh-17rem)]"}`}
         >
-          <div className="space-y-4 p-4">
+          <div className="flex flex-col justify-between gap-3">
             {messages.map((message) => (
               <div
                 key={message._id}
-                className={`flex ${
+                className={cn(
+                  "flex",
                   message.senderId === userInfo?.id
                     ? "justify-end"
-                    : "justify-start"
-                }`}
+                    : "justify-start",
+                )}
               >
                 <div
                   className={`max-w-[70%] rounded-lg p-3 ${
@@ -234,9 +237,16 @@ export default function Chat({ mobileView }: Props) {
                       className="mb-2 rounded-lg"
                     />
                   )}
-                  <p className="text-sm">{message.text}</p>
-                  <p className="mt-1 text-xs text-gray-400">
-                    {message.createdAt}
+                  <p className="text-[1rem]">{message.text}</p>
+                  <p
+                    className={cn(
+                      "mt-1 text-xs",
+                      message.senderId === userInfo?.id
+                        ? "text-gray-200"
+                        : "text-gray-600",
+                    )}
+                  >
+                    {moment(message.createdAt).fromNow()}
                   </p>
                 </div>
               </div>
@@ -267,16 +277,18 @@ export default function Chat({ mobileView }: Props) {
             </div>
           ) : null}
         </div>
-        <div className="w-full">
+        <div className="mb-2 flex w-full items-center gap-2">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSendMessage(e);
+              e.stopPropagation();
             }}
             className="flex w-full space-x-2"
           >
             <Input
               type="text"
+              autoFocus
               placeholder="Type a message..."
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -293,13 +305,23 @@ export default function Chat({ mobileView }: Props) {
               />
 
               <Button
-                onClick={() => fileInputRef.current?.click()}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
                 variant="outline"
               >
                 <Image />
               </Button>
             </div>
-            <Button type="submit" size="icon" disabled={isLoading}>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={isLoading}
+              className="w-14"
+            >
               {isLoading ? (
                 <Loader2 className="animate-spin" />
               ) : (
