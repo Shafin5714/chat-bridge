@@ -277,7 +277,7 @@ export default function Chat({ mobileView }: Props) {
             </div>
           ) : null}
         </div>
-        <div className="mb-2 flex w-full items-center gap-2">
+        <div className="w-full">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -292,7 +292,7 @@ export default function Chat({ mobileView }: Props) {
               placeholder="Type a message..."
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="flex-1"
+              className="h-10 flex-1"
             />
 
             <div>
@@ -306,6 +306,7 @@ export default function Chat({ mobileView }: Props) {
 
               <Button
                 type="button"
+                className="h-10 w-14"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -320,7 +321,7 @@ export default function Chat({ mobileView }: Props) {
               type="submit"
               size="icon"
               disabled={isLoading}
-              className="w-14"
+              className="h-10 w-14"
             >
               {isLoading ? (
                 <Loader2 className="animate-spin" />
