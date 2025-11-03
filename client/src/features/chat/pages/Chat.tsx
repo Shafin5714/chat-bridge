@@ -7,12 +7,12 @@ import MobileNavigation from "../components/mobile-navigation";
 
 export const Chat = () => {
   const [mobileView, setMobileView] = useState<"contacts" | "chat" | "media">(
-    "chat"
+    "chat",
   );
 
   return (
-    <div className="bg-gray-100 px-4 py-3 h-full">
-      <div className="flex flex-col lg:flex-row h-full gap-4">
+    <div className="h-full bg-gray-100 px-4 py-3">
+      <div className="flex h-full flex-col gap-2 lg:flex-row">
         {/* Mobile Navigation */}
         <MobileNavigation
           mobileView={mobileView}

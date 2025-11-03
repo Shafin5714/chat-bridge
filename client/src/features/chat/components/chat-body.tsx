@@ -1,10 +1,5 @@
 import { useState, useRef, ChangeEvent, FormEvent, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -261,23 +256,22 @@ export default function Chat({ mobileView }: Props) {
         </ScrollArea>
       </CardContent>
       <Separator />
-      <CardFooter className="flex flex-col items-end p-2">
-        <div className="w-full p-1">
-          {imagePreview ? (
-            <div className="relative max-h-16 w-16 rounded-sm border border-solid border-gray-400">
-              <Button
-                variant="destructive"
-                size="icon"
-                className="absolute right-[-5px] top-[-5px] m-0 h-5 w-5 rounded-xl p-1"
-                onClick={handleRemove}
-              >
-                <X />
-              </Button>
-              <img src={imagePreview as string} alt="image preview" />
-            </div>
-          ) : null}
-        </div>
-        <div className="w-full">
+      <div className="px-3">
+        {imagePreview ? (
+          <div className="relative max-h-16 w-16 rounded-sm border border-solid border-gray-400">
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute right-[-5px] top-[-5px] m-0 h-5 w-5 rounded-xl p-1"
+              onClick={handleRemove}
+            >
+              <X />
+            </Button>
+            <img src={imagePreview as string} height={30} alt="image preview" />
+          </div>
+        ) : null}
+
+        <div className="mt-3 w-full">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -331,7 +325,7 @@ export default function Chat({ mobileView }: Props) {
             </Button>
           </form>
         </div>
-      </CardFooter>
+      </div>
     </Card>
   );
 }
