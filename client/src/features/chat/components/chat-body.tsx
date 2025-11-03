@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Image, X, Loader2 } from "lucide-react";
+import { Send, Image, X, Loader2, Circle } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { toast } from "sonner";
 import {
@@ -53,7 +53,7 @@ export default function Chat({ mobileView }: Props) {
     isTyping: false,
   });
   const [isTyping, setIsTyping] = useState(false);
-  const { selectedUser } = useAppSelector((state) => state.user);
+  const { selectedUser, onlineUsers } = useAppSelector((state) => state.user);
   const { messages } = useAppSelector((state) => state.message);
   const { userInfo } = useAppSelector((state) => state.auth);
 
@@ -195,17 +195,42 @@ export default function Chat({ mobileView }: Props) {
 
   return (
     <Card
-      className={`flex h-full flex-1 flex-col ${
+      className={`flex h-full flex-1 flex-col rounded-none ${
         mobileView === "chat" ? "block" : "hidden"
       } lg:block`}
     >
-      <CardHeader>
-        <h1 className="text-2xl font-bold">Chat with {selectedUser?.name}</h1>
+      <CardHeader className="h-16 px-4 py-3">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <img
+              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop"
+              alt="Olivia Chen"
+              className="h-10 w-10 rounded-full object-cover"
+            />
+            <p className="absolute bottom-0 right-0 text-xs text-gray-500">
+              {onlineUsers.includes(selectedUser?._id as string) ? (
+                <Circle fill="green" size={12} strokeWidth={0} />
+              ) : (
+                <Circle fill="red" size={12} strokeWidth={0} />
+              )}
+            </p>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold leading-tight text-gray-900">
+              {selectedUser?.name}
+            </h2>
+            <p className="text-sm font-normal text-green-600">
+              {onlineUsers.includes(selectedUser?._id as string)
+                ? "Online"
+                : "Offline"}
+            </p>
+          </div>
+        </div>
       </CardHeader>
       <Separator className="mb-4" />
       <CardContent className="flex-1 overflow-hidden">
         <ScrollArea
-          className={`h-[calc(100vh-20rem)] ${imagePreview ? "lg:max-h-[calc(100vh-20rem)]" : "lg:h-[calc(100vh-17rem)]"}`}
+          className={`h-[calc(100vh-22rem)] ${imagePreview ? "lg:max-h-[calc(100vh-20rem)]" : "lg:h-[calc(100vh-16rem)]"}`}
         >
           <div className="flex flex-col justify-between gap-3">
             {messages.map((message) => (

@@ -16,11 +16,11 @@ function SharedMedia({ mobileView }: Props) {
 
   return (
     <Card
-      className={`w-full lg:w-80 ${
+      className={`w-full rounded-none rounded-r-lg lg:w-80 ${
         mobileView === "media" ? "block" : "hidden"
       } lg:block`}
     >
-      <CardHeader>
+      <CardHeader className="h-16 px-4 py-4">
         <h2 className="text-xl font-bold">Shared Media</h2>
       </CardHeader>
       <Separator className="mb-4" />

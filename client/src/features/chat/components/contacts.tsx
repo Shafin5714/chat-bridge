@@ -24,25 +24,39 @@ export default function Contacts({ mobileView }: Props) {
   useGetUsersQuery();
 
   // state
-  const [onlineUsers, setOnlineUsers] = useState<string[]>([""]);
   const [searchTerm, setSearchTerm] = useState("");
-  const { userList, selectedUser } = useAppSelector((state) => state.user);
+  const { userList, selectedUser, onlineUsers } = useAppSelector(
+    (state) => state.user,
+  );
+  const userInfo = useAppSelector((state) => state.auth.userInfo);
 
   useEffect(() => {
     socket?.on("getOnlineUsers", (data) => {
-      setOnlineUsers(data);
+      dispatch(userSlice.actions.setOnlineUsers(data));
     });
-  }, [socket]);
+  }, [dispatch, socket]);
 
   return (
     <div>
       <Card
-        className={`h-full w-full lg:w-80 ${
+        className={`h-full w-full rounded-none rounded-l-lg lg:w-96 ${
           mobileView === "contacts" ? "block" : "hidden"
         } lg:block`}
       >
-        <CardHeader>
-          <h2 className="text-xl font-bold">Contacts</h2>
+        <CardHeader className="h-16 px-4 py-2">
+          <h2 className="text-xl font-bold">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
+              <div className="flex flex-col">
+                <h1 className="text-base font-medium leading-normal text-gray-800">
+                  {userInfo?.name}
+                </h1>
+                <p className="text-sm font-normal leading-normal text-gray-500">
+                  {userInfo?.email}
+                </p>
+              </div>
+            </div>
+          </h2>
         </CardHeader>
         <Separator className="mb-4" />
         <CardContent>
