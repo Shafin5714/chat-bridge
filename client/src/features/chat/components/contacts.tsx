@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { userSlice } from "@/store/slices";
 import { useSocketContext } from "@/contexts/socket-context";
 import { useEffect, useState } from "react";
-import { Circle, User } from "lucide-react";
+import { Circle, User, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -25,6 +25,7 @@ export default function Contacts({ mobileView }: Props) {
 
   // state
   const [onlineUsers, setOnlineUsers] = useState<string[]>([""]);
+  const [searchTerm, setSearchTerm] = useState("");
   const { userList, selectedUser } = useAppSelector((state) => state.user);
 
   useEffect(() => {
@@ -45,42 +46,58 @@ export default function Contacts({ mobileView }: Props) {
         </CardHeader>
         <Separator className="mb-4" />
         <CardContent>
-          <ScrollArea className="h-[calc(100vh-20rem)] lg:h-[calc(100vh-16rem)]">
+          {/* Search Input */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search contacts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 bg-background py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <ScrollArea className="h-[calc(100vh-22rem)] lg:h-[calc(100vh-18rem)]">
             <div className="space-y-4">
-              {userList.map((user) => (
-                <div
-                  key={user._id}
-                  onClick={() =>
-                    dispatch(userSlice.actions.setSelectedUser(user))
-                  }
-                  className={cn(
-                    "flex cursor-pointer items-center space-x-4 rounded-lg p-2 transition-colors duration-200",
-                    selectedUser?._id === user._id
-                      ? "bg-slate-800 text-white"
-                      : "bg-secondary",
-                    "hover:bg-slate-800 hover:text-white",
-                  )}
-                >
-                  <Avatar
+              {/* Filter users based on search term */}
+              {userList
+                .filter((user) =>
+                  user.name.toLowerCase().includes(searchTerm.toLowerCase()),
+                )
+                .map((user) => (
+                  <div
+                    key={user._id}
+                    onClick={() =>
+                      dispatch(userSlice.actions.setSelectedUser(user))
+                    }
                     className={cn(
-                      "rounded-full border-2 border-blue-500 p-2 hover:border-gray-400",
+                      "flex cursor-pointer items-center space-x-4 rounded-lg p-2 transition-colors duration-200",
+                      selectedUser?._id === user._id
+                        ? "bg-slate-800 text-white"
+                        : "bg-secondary",
+                      "hover:bg-slate-800 hover:text-white",
                     )}
                   >
-                    <User size={32} strokeWidth={2} />
-                  </Avatar>
-
-                  <div className="flex items-center gap-1">
-                    <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {onlineUsers.includes(user._id) ? (
-                        <Circle fill="green" size={12} strokeWidth={0} />
-                      ) : (
-                        <Circle fill="red" size={12} strokeWidth={0} />
+                    <Avatar
+                      className={cn(
+                        "rounded-full border-2 border-blue-500 p-2 hover:border-gray-400",
                       )}
-                    </p>
+                    >
+                      <User size={32} strokeWidth={2} />
+                    </Avatar>
+
+                    <div className="flex items-center gap-1">
+                      <p className="text-sm font-medium">{user.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {onlineUsers.includes(user._id) ? (
+                          <Circle fill="green" size={12} strokeWidth={0} />
+                        ) : (
+                          <Circle fill="red" size={12} strokeWidth={0} />
+                        )}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </ScrollArea>
         </CardContent>
