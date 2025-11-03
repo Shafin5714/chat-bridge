@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\""
+    "install:all": "npm --prefix server i && npm --prefix client i",
+    "dev": "concurrently -n server,client -c green,cyan \"npm --prefix server run dev\" \"npm --prefix client run dev\""
   },
   "repository": {
     "type": "git",
