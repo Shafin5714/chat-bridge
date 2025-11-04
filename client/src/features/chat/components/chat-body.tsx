@@ -195,7 +195,7 @@ export default function Chat({ mobileView }: Props) {
 
   return (
     <Card
-      className={`flex h-full flex-1 flex-col rounded-none ${
+      className={`borer-y-1 flex h-full flex-1 flex-col rounded-none border dark:border-gray-700 dark:border-b-[#1B2332] dark:border-t-[#1B2332] ${
         mobileView === "chat" ? "block" : "hidden"
       } lg:block`}
     >
@@ -216,7 +216,7 @@ export default function Chat({ mobileView }: Props) {
             </p>
           </div>
           <div>
-            <h2 className="text-lg font-semibold leading-tight text-gray-900">
+            <h2 className="text-lg font-semibold leading-tight text-gray-900 dark:text-[#E1E1E1]">
               {selectedUser?.name}
             </h2>
             <p className="text-sm font-normal text-green-600">
@@ -227,8 +227,8 @@ export default function Chat({ mobileView }: Props) {
           </div>
         </div>
       </CardHeader>
-      <Separator className="mb-4" />
-      <CardContent className="flex-1 overflow-hidden">
+      <Separator className="dark:bg-gray-700" />
+      <CardContent className="flex-1 overflow-hidden p-5 dark:bg-gray-900">
         <ScrollArea
           className={`h-[calc(100vh-22rem)] ${imagePreview ? "lg:max-h-[calc(100vh-20rem)]" : "lg:h-[calc(100vh-16rem)]"}`}
         >
@@ -247,14 +247,14 @@ export default function Chat({ mobileView }: Props) {
                   className={`max-w-[70%] rounded-lg p-3 ${
                     message.senderId === userInfo?.id
                       ? "bg-blue-500 text-white"
-                      : "bg-gray-200"
+                      : "bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
                   }`}
                 >
                   {message.image && (
                     <img
                       src={message.image || "/placeholder.svg"}
                       alt="Shared"
-                      className="mb-2 rounded-lg"
+                      className="mb-2 max-w-sm rounded-lg"
                     />
                   )}
                   <p className="text-[1rem]">{message.text}</p>
@@ -263,7 +263,7 @@ export default function Chat({ mobileView }: Props) {
                       "mt-1 text-xs",
                       message.senderId === userInfo?.id
                         ? "text-gray-200"
-                        : "text-gray-600",
+                        : "text-gray-600 dark:text-gray-400",
                     )}
                   >
                     {moment(message.createdAt).fromNow()}
@@ -311,7 +311,7 @@ export default function Chat({ mobileView }: Props) {
               placeholder="Type a message..."
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="h-10 flex-1"
+              className="h-10 flex-1 dark:bg-gray-900"
             />
 
             <div>

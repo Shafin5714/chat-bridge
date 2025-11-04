@@ -16,14 +16,14 @@ function SharedMedia({ mobileView }: Props) {
 
   return (
     <Card
-      className={`w-full rounded-none rounded-r-lg lg:w-80 ${
+      className={`w-full rounded-none rounded-r-lg lg:w-96 ${
         mobileView === "media" ? "block" : "hidden"
       } lg:block`}
     >
       <CardHeader className="h-16 px-4 py-4">
         <h2 className="text-xl font-bold">Shared Media</h2>
       </CardHeader>
-      <Separator className="mb-4" />
+      <Separator className="mb-4 dark:bg-gray-700" />
       <CardContent>
         <ScrollArea className="h-[calc(100vh-20rem)] lg:h-[calc(100vh-16rem)]">
           <div className="grid grid-cols-2 gap-4">
@@ -38,7 +38,9 @@ function SharedMedia({ mobileView }: Props) {
                 </div>
               ))
             ) : (
-              <h2 className="text-gray-600">No Shared Media</h2>
+              <h2 className="text-gray-600 dark:text-gray-400">
+                No Shared Media
+              </h2>
             )}
           </div>
         </ScrollArea>

@@ -30,25 +30,25 @@
     --radius: 0.5rem;
   }
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    --background: 220 39% 11%; /* #101622 - background-dark */
+    --foreground: 0 0% 88%; /* #E1E1E1 - text-primary-dark */
+    --card: 219 30% 15%; /* #181E2C - surface-dark */
+    --card-foreground: 0 0% 88%;
+    --popover: 219 30% 15%;
+    --popover-foreground: 0 0% 88%;
+    --primary: 217 91% 60%; /* #3B82F6 - primary blue */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 219 30% 15%;
+    --secondary-foreground: 0 0% 88%;
+    --muted: 219 30% 15%;
+    --muted-foreground: 240 3% 58%; /* #8E8E93 - text-secondary-dark */
+    --accent: 219 30% 15%;
+    --accent-foreground: 0 0% 88%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 220 39% 14%; /* For subtle borders in dark mode */
+    --input: 219 30% 15%;
+    --ring: 217 91% 60%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;

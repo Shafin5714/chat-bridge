@@ -47,9 +47,9 @@ export default function Contacts({ mobileView }: Props) {
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
               <div className="flex flex-col">
-                <h1 className="text-base font-medium leading-normal text-gray-800">
+                <h2 className="text-base font-medium leading-normal text-gray-800 dark:text-[#E1E1E1]">
                   {userInfo?.name}
-                </h1>
+                </h2>
                 <p className="text-sm font-normal leading-normal text-gray-500">
                   {userInfo?.email}
                 </p>
@@ -57,7 +57,7 @@ export default function Contacts({ mobileView }: Props) {
             </div>
           </h2>
         </CardHeader>
-        <Separator />
+        <Separator className="dark:bg-gray-700" />
         <div>
           {/* Search Input */}
           <div className="p-3">
@@ -92,7 +92,7 @@ export default function Contacts({ mobileView }: Props) {
                         "flex cursor-pointer items-center space-x-4 rounded-lg p-2 transition-colors duration-200",
                         selectedUser?._id === user._id
                           ? "bg-blue-500/10"
-                          : "hover:bg-gray-50",
+                          : "hover:bg-gray-50 dark:hover:bg-blue-700/10",
                       )}
                     >
                       <div className="flex w-full justify-between px-2 py-1">
@@ -119,10 +119,10 @@ export default function Contacts({ mobileView }: Props) {
                           </div>
 
                           <div className="flex flex-col gap-1">
-                            <p className="line-clamp-1 text-base font-medium leading-normal text-gray-900">
+                            <p className="line-clamp-1 text-base font-medium leading-normal text-gray-900 dark:text-[#E1E1E1]">
                               {user.name}
                             </p>
-                            <p className="leading-norma line-clamp-1 text-sm font-medium font-normal text-gray-500">
+                            <p className="leading-norma line-clamp-1 text-sm font-medium text-gray-500 dark:text-gray-300">
                               Last message
                             </p>
                           </div>
