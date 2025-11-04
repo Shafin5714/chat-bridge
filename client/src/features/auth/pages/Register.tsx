@@ -111,7 +111,11 @@ export function Register() {
                     <FormItem>
                       <FormLabel>Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your name" {...field} />
+                        <Input
+                          placeholder="Enter your name"
+                          {...field}
+                          className="dark:bg-gray-900"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -124,7 +128,11 @@ export function Register() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your email" {...field} />
+                        <Input
+                          placeholder="Enter your email"
+                          {...field}
+                          className="dark:bg-gray-900"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -141,6 +149,7 @@ export function Register() {
                           type="password"
                           placeholder="Enter password"
                           {...field}
+                          className="dark:bg-gray-900"
                         />
                       </FormControl>
                       <FormMessage />
@@ -158,6 +167,7 @@ export function Register() {
                           type="password"
                           placeholder="Confirm password"
                           {...field}
+                          className="dark:bg-gray-900"
                         />
                       </FormControl>
                       <FormMessage />

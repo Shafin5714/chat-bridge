@@ -206,14 +206,18 @@ export default function Chat({ mobileView }: Props) {
           <div className="relative">
             <img
               src="/user-placeholder.png"
-              alt="Olivia Chen"
+              alt="user image"
               className="h-10 w-10 rounded-full object-cover"
             />
-            <p className="absolute bottom-0 right-0 text-xs text-gray-500">
+            <p className="absolute bottom-[1px] right-1 text-xs text-gray-500">
               {userOnline ? (
                 <Circle fill="green" size={12} strokeWidth={0} />
               ) : (
-                <Circle fill="red" size={12} strokeWidth={0} />
+                <Circle
+                  className="rounded-full bg-red-600"
+                  size={10}
+                  strokeWidth={0}
+                />
               )}
             </p>
           </div>
