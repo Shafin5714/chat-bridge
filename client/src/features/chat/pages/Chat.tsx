@@ -11,8 +11,8 @@ export const Chat = () => {
   );
 
   return (
-    <div className="h-full bg-gray-100 px-4 py-3">
-      <div className="flex h-full flex-col gap-2 lg:flex-row">
+    <div className="h-full bg-gray-200 px-4 py-3 dark:bg-gray-700">
+      <div className="flex h-full flex-col gap-3 dark:border-gray-700 lg:flex-row lg:gap-0">
         {/* Mobile Navigation */}
         <MobileNavigation
           mobileView={mobileView}

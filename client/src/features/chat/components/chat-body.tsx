@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Image, X, Loader2 } from "lucide-react";
+import { Send, Image, X, Loader2, Circle } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { toast } from "sonner";
 import {
@@ -53,7 +53,7 @@ export default function Chat({ mobileView }: Props) {
     isTyping: false,
   });
   const [isTyping, setIsTyping] = useState(false);
-  const { selectedUser } = useAppSelector((state) => state.user);
+  const { selectedUser, onlineUsers } = useAppSelector((state) => state.user);
   const { messages } = useAppSelector((state) => state.message);
   const { userInfo } = useAppSelector((state) => state.auth);
 
@@ -193,19 +193,53 @@ export default function Chat({ mobileView }: Props) {
     }
   };
 
+  const userOnline = onlineUsers.includes(selectedUser?._id as string);
+
   return (
     <Card
-      className={`flex h-full flex-1 flex-col ${
+      className={`borer-y-1 flex h-full flex-1 flex-col rounded-none border dark:border-gray-700 dark:border-b-[#1B2332] dark:border-t-[#1B2332] ${
         mobileView === "chat" ? "block" : "hidden"
       } lg:block`}
     >
-      <CardHeader>
-        <h1 className="text-2xl font-bold">Chat with {selectedUser?.name}</h1>
+      <CardHeader className="h-16 px-4 py-3">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <img
+              src="/user-placeholder.png"
+              alt="user image"
+              className="h-10 w-10 rounded-full object-cover"
+            />
+            <p className="absolute bottom-[1px] right-1 text-xs text-gray-500">
+              {userOnline ? (
+                <Circle fill="green" size={12} strokeWidth={0} />
+              ) : (
+                <Circle
+                  className="rounded-full bg-red-600"
+                  size={10}
+                  strokeWidth={0}
+                />
+              )}
+            </p>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold leading-tight text-gray-900 dark:text-[#E1E1E1]">
+              {selectedUser?.name}
+            </h2>
+            <p
+              className={cn(
+                "text-sm font-normal",
+                userOnline ? "text-green-500" : "text-red-600",
+              )}
+            >
+              {userOnline ? "Online" : "Offline"}
+            </p>
+          </div>
+        </div>
       </CardHeader>
-      <Separator className="mb-4" />
-      <CardContent className="flex-1 overflow-hidden">
+      <Separator className="dark:bg-gray-700" />
+      <CardContent className="flex-1 overflow-hidden p-5 dark:bg-gray-900">
         <ScrollArea
-          className={`h-[calc(100vh-20rem)] ${imagePreview ? "lg:max-h-[calc(100vh-20rem)]" : "lg:h-[calc(100vh-17rem)]"}`}
+          className={`h-[calc(100vh-22rem)] ${imagePreview ? "lg:h-[calc(100vh-18.5rem)]" : "lg:h-[calc(100vh-16rem)]"}`}
         >
           <div className="flex flex-col justify-between gap-3">
             {messages.map((message) => (
@@ -222,14 +256,14 @@ export default function Chat({ mobileView }: Props) {
                   className={`max-w-[70%] rounded-lg p-3 ${
                     message.senderId === userInfo?.id
                       ? "bg-blue-500 text-white"
-                      : "bg-gray-200"
+                      : "bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
                   }`}
                 >
                   {message.image && (
                     <img
                       src={message.image || "/placeholder.svg"}
                       alt="Shared"
-                      className="mb-2 rounded-lg"
+                      className="mb-2 max-w-sm rounded-lg"
                     />
                   )}
                   <p className="text-[1rem]">{message.text}</p>
@@ -238,7 +272,7 @@ export default function Chat({ mobileView }: Props) {
                       "mt-1 text-xs",
                       message.senderId === userInfo?.id
                         ? "text-gray-200"
-                        : "text-gray-600",
+                        : "text-gray-600 dark:text-gray-400",
                     )}
                   >
                     {moment(message.createdAt).fromNow()}
@@ -267,7 +301,11 @@ export default function Chat({ mobileView }: Props) {
             >
               <X />
             </Button>
-            <img src={imagePreview as string} height={30} alt="image preview" />
+            <img
+              src={imagePreview as string}
+              className="h-10 w-28"
+              alt="image preview"
+            />
           </div>
         ) : null}
 
@@ -286,7 +324,7 @@ export default function Chat({ mobileView }: Props) {
               placeholder="Type a message..."
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="h-10 flex-1"
+              className="h-10 flex-1 dark:bg-gray-900"
             />
 
             <div>

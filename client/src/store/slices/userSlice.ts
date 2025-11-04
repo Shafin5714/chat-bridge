@@ -10,10 +10,12 @@ type User = {
 type messageState = {
   userList: User[];
   selectedUser: User | null;
+  onlineUsers: string[];
 };
 
 const initialState: messageState = {
   userList: [],
+  onlineUsers: [],
   selectedUser: null,
 };
 
@@ -27,6 +29,9 @@ export const userSlice = createSlice({
     },
     setSelectedUser: (state, action: PayloadAction<User>) => {
       state.selectedUser = action.payload;
+    },
+    setOnlineUsers: (state, action: PayloadAction<string[]>) => {
+      state.onlineUsers = action.payload;
     },
   },
   extraReducers: (builder) => {
