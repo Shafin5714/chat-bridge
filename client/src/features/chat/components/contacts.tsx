@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { userSlice } from "@/store/slices";
 import { useSocketContext } from "@/contexts/socket-context";
 import { useEffect, useState } from "react";
-import { Circle, User, Search } from "lucide-react";
+import { Circle, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -45,7 +45,11 @@ export default function Contacts({ mobileView }: Props) {
         <CardHeader className="h-16 px-4 py-2">
           <h2 className="text-xl font-bold">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
+              <img
+                src="/user-placeholder.png"
+                alt="user"
+                className="h-10 w-10"
+              />
               <div className="flex flex-col">
                 <h2 className="text-base font-medium leading-normal text-gray-800 dark:text-[#E1E1E1]">
                   {userInfo?.name}
@@ -98,14 +102,12 @@ export default function Contacts({ mobileView }: Props) {
                       <div className="flex w-full justify-between px-2 py-1">
                         <div className="flex gap-3">
                           <div className="relative">
-                            <div
-                              className={cn(
-                                "rounded-full border-2 border-blue-500 p-2 hover:border-gray-400",
-                              )}
-                            >
-                              <User size={28} strokeWidth={2} />
-                            </div>
-                            <p className="absolute bottom-0 right-0 text-xs text-gray-500">
+                            <img
+                              src="user-placeholder.png"
+                              alt="user"
+                              className="h-14 w-14"
+                            />
+                            <p className="absolute bottom-1 right-1 text-xs text-gray-500">
                               {onlineUsers.includes(user._id) ? (
                                 <Circle
                                   fill="green"
@@ -122,7 +124,7 @@ export default function Contacts({ mobileView }: Props) {
                             <p className="line-clamp-1 text-base font-medium leading-normal text-gray-900 dark:text-[#E1E1E1]">
                               {user.name}
                             </p>
-                            <p className="leading-norma line-clamp-1 text-sm font-medium text-gray-500 dark:text-gray-300">
+                            <p className="leading-norma line-clamp-1 text-sm font-medium text-gray-500 dark:text-gray-400">
                               Last message
                             </p>
                           </div>

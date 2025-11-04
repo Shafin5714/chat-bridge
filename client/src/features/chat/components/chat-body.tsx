@@ -193,6 +193,8 @@ export default function Chat({ mobileView }: Props) {
     }
   };
 
+  const userOnline = onlineUsers.includes(selectedUser?._id as string);
+
   return (
     <Card
       className={`borer-y-1 flex h-full flex-1 flex-col rounded-none border dark:border-gray-700 dark:border-b-[#1B2332] dark:border-t-[#1B2332] ${
@@ -203,12 +205,12 @@ export default function Chat({ mobileView }: Props) {
         <div className="flex items-center gap-4">
           <div className="relative">
             <img
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop"
+              src="/user-placeholder.png"
               alt="Olivia Chen"
               className="h-10 w-10 rounded-full object-cover"
             />
             <p className="absolute bottom-0 right-0 text-xs text-gray-500">
-              {onlineUsers.includes(selectedUser?._id as string) ? (
+              {userOnline ? (
                 <Circle fill="green" size={12} strokeWidth={0} />
               ) : (
                 <Circle fill="red" size={12} strokeWidth={0} />
@@ -219,10 +221,13 @@ export default function Chat({ mobileView }: Props) {
             <h2 className="text-lg font-semibold leading-tight text-gray-900 dark:text-[#E1E1E1]">
               {selectedUser?.name}
             </h2>
-            <p className="text-sm font-normal text-green-600">
-              {onlineUsers.includes(selectedUser?._id as string)
-                ? "Online"
-                : "Offline"}
+            <p
+              className={cn(
+                "text-sm font-normal",
+                userOnline ? "text-green-500" : "text-red-600",
+              )}
+            >
+              {userOnline ? "Online" : "Offline"}
             </p>
           </div>
         </div>
