@@ -230,7 +230,7 @@ export default function Chat({ mobileView }: Props) {
       <Separator className="dark:bg-gray-700" />
       <CardContent className="flex-1 overflow-hidden p-5 dark:bg-gray-900">
         <ScrollArea
-          className={`h-[calc(100vh-22rem)] ${imagePreview ? "lg:max-h-[calc(100vh-20rem)]" : "lg:h-[calc(100vh-16rem)]"}`}
+          className={`h-[calc(100vh-22rem)] ${imagePreview ? "lg:h-[calc(100vh-18.5rem)]" : "lg:h-[calc(100vh-16rem)]"}`}
         >
           <div className="flex flex-col justify-between gap-3">
             {messages.map((message) => (
@@ -292,7 +292,11 @@ export default function Chat({ mobileView }: Props) {
             >
               <X />
             </Button>
-            <img src={imagePreview as string} height={30} alt="image preview" />
+            <img
+              src={imagePreview as string}
+              className="h-10 w-28"
+              alt="image preview"
+            />
           </div>
         ) : null}
 
