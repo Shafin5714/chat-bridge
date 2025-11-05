@@ -85,6 +85,88 @@ export const sendMessage = asyncHandler(async (req, res) => {
     io.to(receiveSocketId).emit("newMessage", newMessage);
   }
 
+  // Emit updated user data to both sender and receiver
+  const senderSocketId = getReceiverSocketId(senderId);
+  const receiverSocketId = getReceiverSocketId(receiverId);
+
+  // Get updated user data for sender
+  const senderUsers = await User.find({
+    _id: { $ne: senderId },
+  }).select("-password");
+
+  const senderUsersWithLastMessage = await Promise.all(
+    senderUsers.map(async (user) => {
+      const lastMessage = await Message.findOne({
+        $or: [
+          { senderId: senderId, receiverId: user._id },
+          { senderId: user._id, receiverId: senderId },
+        ],
+      }).sort({ createdAt: -1 });
+
+      const unreadCount = await Message.countDocuments({
+        senderId: user._id,
+        receiverId: senderId,
+        read: false,
+      });
+
+      return {
+        ...user.toObject(),
+        lastMessage: lastMessage
+          ? {
+              text: lastMessage.text,
+              image: lastMessage.image,
+              senderId: lastMessage.senderId,
+            }
+          : null,
+        lastMessageTime: lastMessage ? lastMessage.createdAt : null,
+        unreadCount,
+      };
+    })
+  );
+
+  // Get updated user data for receiver
+  const receiverUsers = await User.find({
+    _id: { $ne: receiverId },
+  }).select("-password");
+
+  const receiverUsersWithLastMessage = await Promise.all(
+    receiverUsers.map(async (user) => {
+      const lastMessage = await Message.findOne({
+        $or: [
+          { senderId: receiverId, receiverId: user._id },
+          { senderId: user._id, receiverId: receiverId },
+        ],
+      }).sort({ createdAt: -1 });
+
+      const unreadCount = await Message.countDocuments({
+        senderId: user._id,
+        receiverId: receiverId,
+        read: false,
+      });
+
+      return {
+        ...user.toObject(),
+        lastMessage: lastMessage
+          ? {
+              text: lastMessage.text,
+              image: lastMessage.image,
+              senderId: lastMessage.senderId,
+            }
+          : null,
+        lastMessageTime: lastMessage ? lastMessage.createdAt : null,
+        unreadCount,
+      };
+    })
+  );
+
+  // Emit updated user lists
+  if (senderSocketId) {
+    io.to(senderSocketId).emit("updatedUsers", senderUsersWithLastMessage);
+  }
+  if (receiverSocketId) {
+    io.to(receiverSocketId).emit("updatedUsers", receiverUsersWithLastMessage);
+  }
+
   res.status(201).json({
     success: true,
     data: newMessage,

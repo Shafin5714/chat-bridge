@@ -32,7 +32,7 @@ export const userSlice = createSlice({
   reducers: {
     reset: () => initialState,
     setUsers: (state, action: PayloadAction<User[]>) => {
-      state.userList = { ...action.payload };
+      state.userList = action.payload;
     },
     setSelectedUser: (state, action: PayloadAction<User>) => {
       state.selectedUser = action.payload;
