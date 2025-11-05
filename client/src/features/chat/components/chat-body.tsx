@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import {
   useSendMessageMutation,
   useGetMessagesQuery,
+  useMarkMessagesAsReadMutation,
 } from "@/store/api/messageApi";
 import imageCompression from "browser-image-compression";
 import { skipToken } from "@reduxjs/toolkit/query";
@@ -59,6 +60,7 @@ export default function Chat({ mobileView }: Props) {
 
   // api
   const [sendMessage, { isLoading }] = useSendMessageMutation();
+  const [markMessagesAsRead] = useMarkMessagesAsReadMutation();
   const userId = selectedUser?._id ?? skipToken;
   const { data } = useGetMessagesQuery(userId, {
     refetchOnMountOrArgChange: true,
@@ -77,6 +79,19 @@ export default function Chat({ mobileView }: Props) {
       scrollToBottom();
     }, 500);
   }, [data, messages, isTyping]);
+
+  useEffect(() => {
+    // Mark messages as read when opening a chat
+    if (selectedUser && data?.data && data.data.length > 0) {
+      const hasUnreadMessages = data.data.some(
+        (message) => message.senderId === selectedUser._id && !message.read,
+      );
+
+      if (hasUnreadMessages) {
+        markMessagesAsRead(selectedUser._id);
+      }
+    }
+  }, [selectedUser?._id]); // Only run when selected user changes, not on every data update
 
   useEffect(() => {
     const handleNewMessage = (newMessage: Message) => {

@@ -30,8 +30,6 @@ export default function Contacts({ mobileView }: Props) {
   );
   const userInfo = useAppSelector((state) => state.auth.userInfo);
 
-  console.log(userList);
-
   useEffect(() => {
     socket?.on("getOnlineUsers", (data) => {
       dispatch(userSlice.actions.setOnlineUsers(data));
