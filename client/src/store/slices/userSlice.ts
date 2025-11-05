@@ -5,6 +5,13 @@ type User = {
   _id: string;
   name: string;
   email: string;
+  lastMessage: {
+    text: string;
+    image: string;
+    senderId: string;
+  } | null;
+  lastMessageTime: string | null;
+  unreadCount: number;
 };
 
 type messageState = {

@@ -5,9 +5,9 @@ import Message from "../models/messageModel.js";
 import { io, getReceiverSocketId } from "../lib/socket.js";
 
 // @route   GET /api/message/users
-// @desc    Get all users except the logged in user
+// @desc    Get all users except the logged in user with last message
 // @access  Private
-// @returns { success, data: {_id, email, name, profilePic, createdAt, updatedAt}[]}
+// @returns { success, data: {_id, email, name, profilePic, createdAt, updatedAt, lastMessage, lastMessageTime, unreadCount}[]}
 export const getUsers = asyncHandler(async (req, res) => {
   const loggedInUser = req.user._id;
 
@@ -15,9 +15,41 @@ export const getUsers = asyncHandler(async (req, res) => {
     _id: { $ne: loggedInUser },
   }).select("-password");
 
+  // Get last message for each user
+  const usersWithLastMessage = await Promise.all(
+    filteredUsers.map(async (user) => {
+      const lastMessage = await Message.findOne({
+        $or: [
+          { senderId: loggedInUser, receiverId: user._id },
+          { senderId: user._id, receiverId: loggedInUser },
+        ],
+      }).sort({ createdAt: -1 });
+
+      // Count unread messages (messages from other user that haven't been read)
+      const unreadCount = await Message.countDocuments({
+        senderId: user._id,
+        receiverId: loggedInUser,
+        read: false,
+      });
+
+      return {
+        ...user.toObject(),
+        lastMessage: lastMessage
+          ? {
+              text: lastMessage.text,
+              image: lastMessage.image,
+              senderId: lastMessage.senderId,
+            }
+          : null,
+        lastMessageTime: lastMessage ? lastMessage.createdAt : null,
+        unreadCount,
+      };
+    })
+  );
+
   res.status(200).json({
     success: true,
-    data: filteredUsers,
+    data: usersWithLastMessage,
   });
 });
 
@@ -43,6 +75,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
     receiverId,
     text,
     image: imageUrl,
+    read: true, // Mark as read when sent by the sender
   });
 
   await newMessage.save();

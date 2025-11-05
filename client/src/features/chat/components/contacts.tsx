@@ -9,6 +9,7 @@ import { useSocketContext } from "@/contexts/socket-context";
 import { useEffect, useState } from "react";
 import { Circle, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import moment from "moment";
 
 type Props = {
   mobileView: string;
@@ -125,7 +126,7 @@ export default function Contacts({ mobileView }: Props) {
                               {user.name}
                             </p>
                             <p className="leading-norma line-clamp-1 text-sm font-medium text-gray-500 dark:text-gray-400">
-                              Last message
+                              {user.lastMessage?.text || "No messages yet"}
                             </p>
                           </div>
                         </div>
@@ -133,14 +134,18 @@ export default function Contacts({ mobileView }: Props) {
                         <div>
                           <div className="shrink-0 text-right">
                             <p className="text-xs font-normal leading-normal text-gray-500">
-                              10:23 PM
+                              {user.lastMessageTime
+                                ? moment(user.lastMessageTime).format("h:mm a")
+                                : ""}
                             </p>
 
-                            <div className="mt-1 flex justify-end">
-                              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs font-semibold text-white">
-                                2
+                            {user.unreadCount > 0 && (
+                              <div className="mt-1 flex justify-end">
+                                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs font-semibold text-white">
+                                  {user.unreadCount}
+                                </div>
                               </div>
-                            </div>
+                            )}
                           </div>
                         </div>
                       </div>
