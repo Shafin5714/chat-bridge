@@ -30,6 +30,12 @@ export const messageSlice = createSlice({
     setMessage: (state, action: PayloadAction<Message>) => {
       state.messages = [...state.messages, action.payload];
     },
+    markMessagesAsReadLocally: (state, action: PayloadAction<string>) => {
+      const senderId = action.payload;
+      state.messages = state.messages.map((msg) =>
+        msg.senderId === senderId ? { ...msg, read: true } : msg,
+      );
+    },
   },
   extraReducers: (builder) => {
     builder.addMatcher(

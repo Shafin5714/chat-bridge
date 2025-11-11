@@ -75,7 +75,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
     receiverId,
     text,
     image: imageUrl,
-    read: true, // Mark as read when sent by the sender
+    read: false,
   });
 
   await newMessage.save();
@@ -102,7 +102,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
         const unreadCount = await Message.countDocuments({
           senderId: user._id,
           receiverId: receiverId,
-          read: false,
+          read: senderId === receiverId ? true : false,
         });
 
         return {
@@ -273,18 +273,18 @@ export const getMessages = async (req, res) => {
 // @desc    Mark all messages from a user as read
 // @access  Private
 export const markMessagesAsRead = asyncHandler(async (req, res) => {
-  const { id: userId } = req.params;
-  const myId = req.user._id;
+  const { id: userId } = req.params; // sender id (person we're reading messages FROM)
+  const myId = req.user._id; // receiver id (me, the person marking as read)
 
+  // Mark messages as read
   await Message.updateMany(
     { senderId: userId, receiverId: myId, read: false },
     { read: true }
   );
 
-  // Get socket ID of the user whose messages are being marked as read
-  const userSocketId = getReceiverSocketId(userId);
-  if (userSocketId) {
-    // Emit updated user data to the other user
+  // 1. Update the SENDER's view (User B sees their unread count decrease)
+  const senderSocketId = getReceiverSocketId(userId);
+  if (senderSocketId) {
     const otherUsers = await User.find({
       _id: { $ne: userId },
     }).select("-password");
@@ -319,7 +319,47 @@ export const markMessagesAsRead = asyncHandler(async (req, res) => {
       })
     );
 
-    io.to(userSocketId).emit("updatedUsers", otherUsersWithLastMessage);
+    io.to(senderSocketId).emit("updatedUsers", otherUsersWithLastMessage);
+  }
+
+  // 2. Update the CURRENT USER's view (User A sees read status updated)
+  const mySocketId = getReceiverSocketId(myId);
+  if (mySocketId) {
+    const myOtherUsers = await User.find({
+      _id: { $ne: myId },
+    }).select("-password");
+
+    const myOtherUsersWithLastMessage = await Promise.all(
+      myOtherUsers.map(async (user) => {
+        const lastMessage = await Message.findOne({
+          $or: [
+            { senderId: myId, receiverId: user._id },
+            { senderId: user._id, receiverId: myId },
+          ],
+        }).sort({ createdAt: -1 });
+
+        const unreadCount = await Message.countDocuments({
+          senderId: user._id,
+          receiverId: myId,
+          read: false,
+        });
+
+        return {
+          ...user.toObject(),
+          lastMessage: lastMessage
+            ? {
+                text: lastMessage.text,
+                image: lastMessage.image,
+                senderId: lastMessage.senderId,
+              }
+            : null,
+          lastMessageTime: lastMessage ? lastMessage.createdAt : null,
+          unreadCount,
+        };
+      })
+    );
+
+    io.to(mySocketId).emit("updatedUsers", myOtherUsersWithLastMessage);
   }
 
   res.status(200).json({

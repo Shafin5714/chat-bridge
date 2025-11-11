@@ -81,7 +81,6 @@ export default function Chat({ mobileView }: Props) {
   }, [data, messages, isTyping]);
 
   useEffect(() => {
-    // Mark messages as read when opening a chat
     if (selectedUser && data?.data && data.data.length > 0) {
       const hasUnreadMessages = data.data.some(
         (message) => message.senderId === selectedUser._id && !message.read,
@@ -89,13 +88,26 @@ export default function Chat({ mobileView }: Props) {
 
       if (hasUnreadMessages) {
         markMessagesAsRead(selectedUser._id);
+        // Update local Redux state immediately
+        dispatch(
+          messageSlice.actions.markMessagesAsReadLocally(selectedUser._id),
+        );
       }
     }
-  }, [selectedUser?._id]); // Only run when selected user changes, not on every data update
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUser?._id, data]);
 
   useEffect(() => {
     const handleNewMessage = (newMessage: Message) => {
       setNewMessage(newMessage);
+
+      // Auto-mark as read if chat is currently open with this user
+      if (newMessage.senderId === selectedUser?._id) {
+        markMessagesAsRead(selectedUser._id);
+        dispatch(
+          messageSlice.actions.markMessagesAsReadLocally(selectedUser._id),
+        );
+      }
     };
 
     socket?.on("newMessage", handleNewMessage);
@@ -103,7 +115,7 @@ export default function Chat({ mobileView }: Props) {
     return () => {
       socket?.off("newMessage", handleNewMessage);
     };
-  }, [socket]);
+  }, [socket, selectedUser?._id]);
 
   useEffect(() => {
     const isMessageSentFromSelectedUser = newMessage?.senderId === userId;
