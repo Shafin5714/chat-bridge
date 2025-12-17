@@ -250,11 +250,11 @@ export const getMessages = async (req, res) => {
   const { id: userToChatId } = req.params;
   const myId = req.user._id;
 
-  // Mark messages from the other user as read
-  await Message.updateMany(
-    { senderId: userToChatId, receiverId: myId, read: false },
-    { read: true }
-  );
+  // REMOVED: Side effect moved to explicit markMessagesAsRead endpoint
+  // await Message.updateMany(
+  //   { senderId: userToChatId, receiverId: myId, read: false },
+  //   { read: true }
+  // );
 
   const messages = await Message.find({
     $or: [
@@ -320,6 +320,15 @@ export const markMessagesAsRead = asyncHandler(async (req, res) => {
     );
 
     io.to(senderSocketId).emit("updatedUsers", otherUsersWithLastMessage);
+    // NEW: Emit event to let the sender know their messages were read
+    console.log(`[markMessagesAsRead] Emitting messagesRead to sender: ${userId} at socket: ${senderSocketId}`);
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("messagesRead", {
+        receiverId: myId,
+      });
+    } else {
+      console.log(`[markMessagesAsRead] Sender ${userId} is offline or socket not found`);
+    }
   }
 
   // 2. Update the CURRENT USER's view (User A sees read status updated)

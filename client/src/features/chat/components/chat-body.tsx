@@ -31,6 +31,7 @@ type Message = {
   senderId: string;
   text: string;
   updatedAt: string;
+  read: boolean;
 };
 
 export default function Chat({ mobileView }: Props) {
@@ -62,7 +63,7 @@ export default function Chat({ mobileView }: Props) {
   const [sendMessage, { isLoading }] = useSendMessageMutation();
   const [markMessagesAsRead] = useMarkMessagesAsReadMutation();
   const userId = selectedUser?._id ?? skipToken;
-  const { data } = useGetMessagesQuery(userId, {
+  const { data, refetch } = useGetMessagesQuery(userId, {
     refetchOnMountOrArgChange: true,
   });
 
@@ -148,10 +149,20 @@ export default function Chat({ mobileView }: Props) {
 
     socket?.on("typingMessageGet", handleTypingMessage);
 
+    const handleMessagesRead = (data: { receiverId: string }) => {
+      console.log("[Chat] messagesRead event received for:", data.receiverId);
+      dispatch(messageSlice.actions.markMessagesAsRead(data.receiverId));
+      // Fallback: Refetch messages to ensure consistency if local update fails
+      refetch();
+    };
+    
+    socket?.on("messagesRead", handleMessagesRead);
+
     return () => {
       socket?.off("typingMessageGet", handleTypingMessage);
+      socket?.off("messagesRead", handleMessagesRead);
     };
-  }, [socket]);
+  }, [socket, dispatch, refetch]);
 
   useEffect(() => {
     if (typingData.senderId === userId) {
@@ -303,6 +314,15 @@ export default function Chat({ mobileView }: Props) {
                     )}
                   >
                     {moment(message.createdAt).fromNow()}
+                    {message.senderId === userInfo?.id && (
+                      <span className="ml-2 inline-block">
+                        {message.read ? (
+                          <span className="text-blue-200">✓✓</span>
+                        ) : (
+                          <span className="text-gray-400">✓</span>
+                        )}
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>

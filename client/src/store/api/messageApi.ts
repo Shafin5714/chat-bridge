@@ -33,7 +33,7 @@ type Message = {
   senderId: string;
   text: string;
   updatedAt: string;
-  read?: boolean;
+  read: boolean;
 };
 
 type SendMessageResponse = {
