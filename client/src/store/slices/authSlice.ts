@@ -1,11 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { authApi } from "../api/authApi";
+import type { UserInfo } from "@/types";
 
-type UserInfo = {
-  id: string;
-  name: string;
-  email: string;
-};
 type AuthState = {
   userInfo: UserInfo | null;
 };

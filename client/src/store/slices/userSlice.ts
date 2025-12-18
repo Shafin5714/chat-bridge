@@ -1,34 +1,22 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { messageApi } from "../api/messageApi";
 import { authApi } from "../api/authApi";
+import type { User } from "@/types";
 
-type User = {
-  _id: string;
-  name: string;
-  email: string;
-  lastMessage: {
-    text: string;
-    image: string;
-    senderId: string;
-  } | null;
-  lastMessageTime: string | null;
-  unreadCount: number;
-};
-
-type messageState = {
+type UserState = {
   userList: User[];
   selectedUser: User | null;
   onlineUsers: string[];
 };
 
-const initialState: messageState = {
+const initialState: UserState = {
   userList: [],
   onlineUsers: [],
   selectedUser: null,
 };
 
 export const userSlice = createSlice({
-  name: "message",
+  name: "user",
   initialState,
   reducers: {
     reset: () => initialState,

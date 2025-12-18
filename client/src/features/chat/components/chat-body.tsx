@@ -1,4 +1,4 @@
-import { useState, useRef, ChangeEvent, FormEvent, useEffect } from "react";
+import { useState, useRef, ChangeEvent, FormEvent, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,34 +10,22 @@ import { toast } from "sonner";
 import {
   useSendMessageMutation,
   useGetMessagesQuery,
-  useMarkMessagesAsReadMutation,
 } from "@/store/api/messageApi";
 import imageCompression from "browser-image-compression";
 import { skipToken } from "@reduxjs/toolkit/query";
-import { useSocketContext } from "@/contexts/socket-context";
 import { messageSlice } from "@/store/slices";
 import moment from "moment";
 import { cn } from "@/lib/utils";
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
+import type { Message } from "@/types";
+import { useChatSocket, useTypingIndicator } from "../hooks";
 
 type Props = {
   mobileView: string;
 };
 
-type Message = {
-  _id: string;
-  createdAt: string;
-  image: string;
-  receiverId: string;
-  senderId: string;
-  text: string;
-  updatedAt: string;
-  read: boolean;
-};
-
 export default function Chat({ mobileView }: Props) {
   // hooks
-  const { socket } = useSocketContext();
   const dispatch = useAppDispatch();
 
   // states
@@ -47,32 +35,36 @@ export default function Chat({ mobileView }: Props) {
   const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>(
     null,
   );
-  const [typingData, setTypingData] = useState<{
-    senderId: string;
-    receiverId: string;
-    isTyping: boolean;
-  }>({
-    senderId: "",
-    receiverId: "",
-    isTyping: false,
-  });
-  const [isTyping, setIsTyping] = useState(false);
   const { selectedUser, onlineUsers } = useAppSelector((state) => state.user);
   const { messages } = useAppSelector((state) => state.message);
   const { userInfo } = useAppSelector((state) => state.auth);
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
     setText((prev) => prev + emojiData.emoji);
-    // Optionally close picker or keep it open
-    // setShowPicker(false); 
   };
 
   // api
   const [sendMessage, { isLoading }] = useSendMessageMutation();
-  const [markMessagesAsRead] = useMarkMessagesAsReadMutation();
   const userId = selectedUser?._id ?? skipToken;
   const { data, refetch } = useGetMessagesQuery(userId, {
     refetchOnMountOrArgChange: true,
+  });
+
+  // Custom hooks for socket handling
+  const handleNewMessage = useCallback((message: Message) => {
+    setNewMessage(message);
+  }, []);
+
+  const { markAsRead } = useChatSocket({
+    selectedUserId: selectedUser?._id,
+    onNewMessage: handleNewMessage,
+    refetch,
+  });
+
+  const isTyping = useTypingIndicator({
+    currentUserId: userInfo?.id,
+    selectedUserId: selectedUser?._id,
+    text,
   });
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -89,6 +81,7 @@ export default function Chat({ mobileView }: Props) {
     }, 500);
   }, [data, messages, isTyping]);
 
+  // Mark messages as read when chat is opened with unread messages
   useEffect(() => {
     if (selectedUser && data?.data && data.data.length > 0) {
       const hasUnreadMessages = data.data.some(
@@ -96,90 +89,21 @@ export default function Chat({ mobileView }: Props) {
       );
 
       if (hasUnreadMessages) {
-        markMessagesAsRead(selectedUser._id);
-        // Update local Redux state immediately
-        dispatch(
-          messageSlice.actions.markMessagesAsReadLocally(selectedUser._id),
-        );
+        markAsRead();
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedUser?._id, data]);
+  }, [selectedUser?._id, data, markAsRead]);
 
-  useEffect(() => {
-    const handleNewMessage = (newMessage: Message) => {
-      setNewMessage(newMessage);
-
-      // Auto-mark as read if chat is currently open with this user
-      if (newMessage.senderId === selectedUser?._id) {
-        markMessagesAsRead(selectedUser._id);
-        dispatch(
-          messageSlice.actions.markMessagesAsReadLocally(selectedUser._id),
-        );
-      }
-    };
-
-    socket?.on("newMessage", handleNewMessage);
-
-    return () => {
-      socket?.off("newMessage", handleNewMessage);
-    };
-  }, [socket, selectedUser?._id]);
-
+  // Add new message to local state
   useEffect(() => {
     const isMessageSentFromSelectedUser = newMessage?.senderId === userId;
-    if (isMessageSentFromSelectedUser) {
+    if (isMessageSentFromSelectedUser && newMessage) {
       dispatch(messageSlice.actions.setMessage(newMessage));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newMessage]);
 
-  useEffect(() => {
-    socket?.emit("typingMessage", {
-      senderId: userInfo?.id,
-      receiverId: userId,
-      isTyping: text.length > 0 ? true : false,
-    });
-  }, [socket, text, userId, userInfo?.id]);
-
-  useEffect(() => {
-    const handleTypingMessage = (data: {
-      senderId: string;
-      receiverId: string;
-      isTyping: boolean;
-    }) => {
-      setTypingData({
-        senderId: data.senderId,
-        receiverId: data.receiverId,
-        isTyping: data.isTyping,
-      });
-    };
-
-    socket?.on("typingMessageGet", handleTypingMessage);
-
-    const handleMessagesRead = (data: { receiverId: string }) => {
-      console.log("[Chat] messagesRead event received for:", data.receiverId);
-      dispatch(messageSlice.actions.markMessagesAsRead(data.receiverId));
-      // Fallback: Refetch messages to ensure consistency if local update fails
-      refetch();
-    };
-    
-    socket?.on("messagesRead", handleMessagesRead);
-
-    return () => {
-      socket?.off("typingMessageGet", handleTypingMessage);
-      socket?.off("messagesRead", handleMessagesRead);
-    };
-  }, [socket, dispatch, refetch]);
-
-  useEffect(() => {
-    if (typingData.senderId === userId) {
-      setIsTyping(typingData.isTyping);
-    } else {
-      setIsTyping(false);
-    }
-  }, [typingData, userId]);
-
+  // Reset form when switching users
   useEffect(() => {
     setText("");
     setImagePreview(null);

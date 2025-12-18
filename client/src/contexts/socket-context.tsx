@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useRef,
 } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { userSlice } from "@/store/slices";
@@ -14,28 +15,12 @@ type Props = {
   children: ReactNode;
 };
 
-// interface User {
-//   _id: string;
-//   name: string;
-//   email: string;
-//   lastMessage: {
-//     text: string;
-//     image: string;
-//     senderId: string;
-//   } | null;
-//   lastMessageTime: string | null;
-//   unreadCount: number;
-// }
-
 const SocketContext = createContext<{
   socket: Socket | null;
-  // setUsers: (users: User[]) => void;
 }>({
   socket: null,
-  // setUsers: () => {},
 });
 
-import { useRef } from "react";
 
 export const SocketProvider = ({ children }: Props) => {
   const socketRef = useRef<Socket | null>(null);
@@ -75,9 +60,6 @@ export const SocketProvider = ({ children }: Props) => {
     };
   }, [userInfo, dispatch]);
 
-  // const setUsers = (users: User[]) => {
-  //   dispatch(userSlice.actions.setUsers(users));
-  // };
 
   return (
     <SocketContext.Provider value={{ socket }}>
