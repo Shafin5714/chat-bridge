@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Image, X, Loader2, Circle } from "lucide-react";
+import { Send, Image, X, Loader2, Circle, Smile } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { toast } from "sonner";
 import {
@@ -17,6 +17,7 @@ import { useSocketContext } from "@/contexts/socket-context";
 import { messageSlice } from "@/store/slices";
 import moment from "moment";
 import { cn } from "@/lib/utils";
+import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 
 type Props = {
   mobileView: string;
@@ -39,6 +40,7 @@ export default function Chat({ mobileView }: Props) {
 
   // states
   const [text, setText] = useState<string>("");
+  const [showPicker, setShowPicker] = useState(false);
   const [newMessage, setNewMessage] = useState<Message>();
   const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>(
     null,
@@ -56,6 +58,12 @@ export default function Chat({ mobileView }: Props) {
   const { selectedUser, onlineUsers } = useAppSelector((state) => state.user);
   const { messages } = useAppSelector((state) => state.message);
   const { userInfo } = useAppSelector((state) => state.auth);
+
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setText((prev) => prev + emojiData.emoji);
+    // Optionally close picker or keep it open
+    // setShowPicker(false); 
+  };
 
   // api
   const [sendMessage, { isLoading }] = useSendMessageMutation();
@@ -133,6 +141,13 @@ export default function Chat({ mobileView }: Props) {
       setIsTyping(false);
     }
   }, [typingData, userId]);
+
+  useEffect(() => {
+    setText("");
+    setImagePreview(null);
+    setShowPicker(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, [selectedUser?._id]);
 
   const compressImage = async (file: File) => {
     const options = {
@@ -316,7 +331,7 @@ export default function Chat({ mobileView }: Props) {
               handleSendMessage(e);
               e.stopPropagation();
             }}
-            className="flex w-full space-x-2"
+            className="flex w-full space-x-2 items-center"
           >
             <Input
               type="text"
@@ -326,6 +341,25 @@ export default function Chat({ mobileView }: Props) {
               onChange={(e) => setText(e.target.value)}
               className="h-10 flex-1 dark:bg-gray-900"
             />
+
+            <div className="relative">
+              {showPicker && (
+                <div className="absolute bottom-12 right-0 z-10">
+                  <EmojiPicker
+                    onEmojiClick={onEmojiClick}
+                    theme={Theme.AUTO}
+                  />
+                </div>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 w-10 px-0"
+                onClick={() => setShowPicker((prev) => !prev)}
+              >
+                <Smile className="h-5 w-5 text-gray-500" />
+              </Button>
+            </div>
 
             <div>
               <input
