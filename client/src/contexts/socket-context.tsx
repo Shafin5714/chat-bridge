@@ -6,17 +6,33 @@ import {
   useState,
   useEffect,
 } from "react";
-import { useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { userSlice } from "@/store/slices";
 import { BACKEND_URL } from "@/constants";
 
 type Props = {
   children: ReactNode;
 };
 
+// interface User {
+//   _id: string;
+//   name: string;
+//   email: string;
+//   lastMessage: {
+//     text: string;
+//     image: string;
+//     senderId: string;
+//   } | null;
+//   lastMessageTime: string | null;
+//   unreadCount: number;
+// }
+
 const SocketContext = createContext<{
   socket: Socket | null;
+  // setUsers: (users: User[]) => void;
 }>({
   socket: null,
+  // setUsers: () => {},
 });
 
 import { useRef } from "react";
@@ -25,6 +41,7 @@ export const SocketProvider = ({ children }: Props) => {
   const socketRef = useRef<Socket | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const { userInfo } = useAppSelector((store) => store.auth);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (userInfo) {
@@ -36,6 +53,11 @@ export const SocketProvider = ({ children }: Props) => {
       });
       socketRef.current = newSocket;
       setSocket(newSocket);
+
+      // Listen for updated users from socket
+      newSocket.on("updatedUsers", (users) => {
+        dispatch(userSlice.actions.setUsers(users));
+      });
     } else {
       if (socketRef.current) {
         socketRef.current.disconnect();
@@ -51,7 +73,11 @@ export const SocketProvider = ({ children }: Props) => {
         setSocket(null);
       }
     };
-  }, [userInfo]);
+  }, [userInfo, dispatch]);
+
+  // const setUsers = (users: User[]) => {
+  //   dispatch(userSlice.actions.setUsers(users));
+  // };
 
   return (
     <SocketContext.Provider value={{ socket }}>

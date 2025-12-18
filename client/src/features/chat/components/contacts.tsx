@@ -9,6 +9,7 @@ import { useSocketContext } from "@/contexts/socket-context";
 import { useEffect, useState } from "react";
 import { Circle, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import moment from "moment";
 
 type Props = {
   mobileView: string;
@@ -33,6 +34,16 @@ export default function Contacts({ mobileView }: Props) {
     socket?.on("getOnlineUsers", (data) => {
       dispatch(userSlice.actions.setOnlineUsers(data));
     });
+
+    // Listen for updated users from socket
+    socket?.on("updatedUsers", (users) => {
+      dispatch(userSlice.actions.setUsers(users));
+    });
+
+    return () => {
+      socket?.off("getOnlineUsers");
+      socket?.off("updatedUsers");
+    };
   }, [dispatch, socket]);
 
   return (
@@ -82,70 +93,83 @@ export default function Contacts({ mobileView }: Props) {
             <ScrollArea className="h-[calc(100vh-22rem)] lg:h-[calc(100vh-18rem)]">
               <div className="space-y-2">
                 {/* Filter users based on search term */}
-                {userList
-                  .filter((user) =>
-                    user.name.toLowerCase().includes(searchTerm.toLowerCase()),
-                  )
-                  .map((user) => (
-                    <div
-                      key={user._id}
-                      onClick={() =>
-                        dispatch(userSlice.actions.setSelectedUser(user))
-                      }
-                      className={cn(
-                        "flex cursor-pointer items-center space-x-4 rounded-lg p-2 transition-colors duration-200",
-                        selectedUser?._id === user._id
-                          ? "bg-blue-500/10"
-                          : "hover:bg-gray-50 dark:hover:bg-blue-700/10",
-                      )}
-                    >
-                      <div className="flex w-full justify-between px-2 py-1">
-                        <div className="flex gap-3">
-                          <div className="relative">
-                            <img
-                              src="user-placeholder.png"
-                              alt="user"
-                              className="h-14 w-14"
-                            />
-                            <p className="absolute bottom-1 right-1 text-xs text-gray-500">
-                              {onlineUsers.includes(user._id) ? (
-                                <Circle
-                                  fill="green"
-                                  size={12}
-                                  strokeWidth={0}
-                                />
-                              ) : (
-                                <Circle fill="red" size={12} strokeWidth={0} />
+                {userList.length &&
+                  userList
+                    ?.filter((user) =>
+                      user.name
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase()),
+                    )
+                    .map((user) => (
+                      <div
+                        key={user._id}
+                        onClick={() =>
+                          dispatch(userSlice.actions.setSelectedUser(user))
+                        }
+                        className={cn(
+                          "flex cursor-pointer items-center space-x-4 rounded-lg p-2 transition-colors duration-200",
+                          selectedUser?._id === user._id
+                            ? "bg-blue-500/10"
+                            : "hover:bg-gray-50 dark:hover:bg-blue-700/10",
+                        )}
+                      >
+                        <div className="flex w-full justify-between px-2 py-1">
+                          <div className="flex gap-3">
+                            <div className="relative">
+                              <img
+                                src="user-placeholder.png"
+                                alt="user"
+                                className="h-14 w-14"
+                              />
+                              <p className="absolute bottom-1 right-1 text-xs text-gray-500">
+                                {onlineUsers.includes(user._id) ? (
+                                  <Circle
+                                    fill="green"
+                                    size={12}
+                                    strokeWidth={0}
+                                  />
+                                ) : (
+                                  <Circle
+                                    fill="red"
+                                    size={12}
+                                    strokeWidth={0}
+                                  />
+                                )}
+                              </p>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <p className="line-clamp-1 text-base font-medium leading-normal text-gray-900 dark:text-[#E1E1E1]">
+                                {user.name}
+                              </p>
+                              <p className="leading-norma line-clamp-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                                {user.lastMessage?.text || "No messages yet"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="shrink-0 text-right">
+                              <p className="text-xs font-normal leading-normal text-gray-500">
+                                {user.lastMessageTime
+                                  ? moment(user.lastMessageTime).format(
+                                      "h:mm a",
+                                    )
+                                  : ""}
+                              </p>
+
+                              {user.unreadCount > 0 && (
+                                <div className="mt-1 flex justify-end">
+                                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs font-semibold text-white">
+                                    {user.unreadCount}
+                                  </div>
+                                </div>
                               )}
-                            </p>
-                          </div>
-
-                          <div className="flex flex-col gap-1">
-                            <p className="line-clamp-1 text-base font-medium leading-normal text-gray-900 dark:text-[#E1E1E1]">
-                              {user.name}
-                            </p>
-                            <p className="leading-norma line-clamp-1 text-sm font-medium text-gray-500 dark:text-gray-400">
-                              Last message
-                            </p>
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="shrink-0 text-right">
-                            <p className="text-xs font-normal leading-normal text-gray-500">
-                              10:23 PM
-                            </p>
-
-                            <div className="mt-1 flex justify-end">
-                              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs font-semibold text-white">
-                                2
-                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
               </div>
             </ScrollArea>
           </div>

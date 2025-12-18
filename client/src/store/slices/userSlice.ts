@@ -1,10 +1,18 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { messageApi } from "../api/messageApi";
+import { authApi } from "../api/authApi";
 
 type User = {
   _id: string;
   name: string;
   email: string;
+  lastMessage: {
+    text: string;
+    image: string;
+    senderId: string;
+  } | null;
+  lastMessageTime: string | null;
+  unreadCount: number;
 };
 
 type messageState = {
@@ -25,7 +33,7 @@ export const userSlice = createSlice({
   reducers: {
     reset: () => initialState,
     setUsers: (state, action: PayloadAction<User[]>) => {
-      state.userList = { ...action.payload };
+      state.userList = action.payload;
     },
     setSelectedUser: (state, action: PayloadAction<User>) => {
       state.selectedUser = action.payload;
@@ -41,6 +49,10 @@ export const userSlice = createSlice({
         state.userList = payload.data;
         state.selectedUser = payload.data[0];
       },
+    );
+    builder.addMatcher(
+      authApi.endpoints.logout.matchFulfilled,
+      () => initialState,
     );
   },
 });

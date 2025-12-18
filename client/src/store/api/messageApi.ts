@@ -9,6 +9,13 @@ type UserResponse = {
     profilePic: string;
     createdAt: string;
     updatedAt: string;
+    lastMessage: {
+      text: string;
+      image: string;
+      senderId: string;
+    } | null;
+    lastMessageTime: string | null;
+    unreadCount: number;
   }[];
 };
 
@@ -26,6 +33,7 @@ type Message = {
   senderId: string;
   text: string;
   updatedAt: string;
+  read: boolean;
 };
 
 type SendMessageResponse = {
@@ -61,8 +69,31 @@ export const messageApi = emptySplitApi.injectEndpoints({
         providesTags: ["Message"],
       }),
     }),
+    markMessagesAsRead: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/message/read/${id}`,
+        method: "PUT",
+      }),
+      onQueryStarted: (id, { dispatch }) => {
+        // Update the cache optimistically
+        dispatch(
+          messageApi.util.updateQueryData("getMessages", id, (draft) => {
+            // Mark all messages from this user as read
+            draft.data.forEach((message) => {
+              if (message.senderId === id) {
+                message.read = true;
+              }
+            });
+          }),
+        );
+      },
+    }),
   }),
 });
 
-export const { useGetUsersQuery, useSendMessageMutation, useGetMessagesQuery } =
-  messageApi;
+export const {
+  useGetUsersQuery,
+  useSendMessageMutation,
+  useGetMessagesQuery,
+  useMarkMessagesAsReadMutation,
+} = messageApi;

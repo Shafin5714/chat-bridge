@@ -7,6 +7,7 @@ import { notFound, errorHandler } from "./middlewares/errorMiddleware.js";
 import routes from "./routes/index.js";
 import { connectDB } from "./config/db.js";
 import { server, app } from "./lib/socket.js";
+import morgan from "morgan";
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use(
   })
 );
 
+app.use(morgan("dev"));
 app.use(routes);
 
 app.use(notFound);
