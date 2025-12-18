@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import asyncHandler from "./asyncHandler.js";
 import User from "../models/userModel.js";
+import logger from "../utils/logger.js";
 
 const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -15,7 +16,7 @@ const protect = asyncHandler(async (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error(error);
+      logger.error("Auth token verification failed:", error.message);
       res.status(401);
       throw new Error("Not authorized, token failed");
     }

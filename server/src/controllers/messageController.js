@@ -3,6 +3,7 @@ import User from "../models/userModel.js";
 import cloudinary from "../lib/cloudinary.js";
 import Message from "../models/messageModel.js";
 import { io, getReceiverSocketId } from "../lib/socket.js";
+import { getUsersWithLastMessage } from "../services/userService.js";
 
 // @route   GET /api/message/users
 // @desc    Get all users except the logged in user with last message
@@ -10,42 +11,7 @@ import { io, getReceiverSocketId } from "../lib/socket.js";
 // @returns { success, data: {_id, email, name, profilePic, createdAt, updatedAt, lastMessage, lastMessageTime, unreadCount}[]}
 export const getUsers = asyncHandler(async (req, res) => {
   const loggedInUser = req.user._id;
-
-  const filteredUsers = await User.find({
-    _id: { $ne: loggedInUser },
-  }).select("-password");
-
-  // Get last message for each user
-  const usersWithLastMessage = await Promise.all(
-    filteredUsers.map(async (user) => {
-      const lastMessage = await Message.findOne({
-        $or: [
-          { senderId: loggedInUser, receiverId: user._id },
-          { senderId: user._id, receiverId: loggedInUser },
-        ],
-      }).sort({ createdAt: -1 });
-
-      // Count unread messages (messages from other user that haven't been read)
-      const unreadCount = await Message.countDocuments({
-        senderId: user._id,
-        receiverId: loggedInUser,
-        read: false,
-      });
-
-      return {
-        ...user.toObject(),
-        lastMessage: lastMessage
-          ? {
-              text: lastMessage.text,
-              image: lastMessage.image,
-              senderId: lastMessage.senderId,
-            }
-          : null,
-        lastMessageTime: lastMessage ? lastMessage.createdAt : null,
-        unreadCount,
-      };
-    })
-  );
+  const usersWithLastMessage = await getUsersWithLastMessage(loggedInUser);
 
   res.status(200).json({
     success: true,
@@ -80,154 +46,21 @@ export const sendMessage = asyncHandler(async (req, res) => {
 
   await newMessage.save();
 
+  // Emit new message to receiver
   const receiveSocketId = getReceiverSocketId(receiverId);
   if (receiveSocketId) {
     io.to(receiveSocketId).emit("newMessage", newMessage);
-
-    // Send updated user data to receiver to update unread count
-    const receiverUser = await User.findById(receiverId).select("-password");
-    const otherUsersForReceiver = await User.find({
-      _id: { $ne: receiverId },
-    }).select("-password");
-
-    const otherUsersWithLastMessageForReceiver = await Promise.all(
-      otherUsersForReceiver.map(async (user) => {
-        const lastMessage = await Message.findOne({
-          $or: [
-            { senderId: receiverId, receiverId: user._id },
-            { senderId: user._id, receiverId: receiverId },
-          ],
-        }).sort({ createdAt: -1 });
-
-        const unreadCount = await Message.countDocuments({
-          senderId: user._id,
-          receiverId: receiverId,
-          read: senderId === receiverId ? true : false,
-        });
-
-        return {
-          ...user.toObject(),
-          lastMessage: lastMessage
-            ? {
-                text: lastMessage.text,
-                image: lastMessage.image,
-                senderId: lastMessage.senderId,
-              }
-            : null,
-          lastMessageTime: lastMessage ? lastMessage.createdAt : null,
-          unreadCount,
-        };
-      })
-    );
-
-    // Add the sender to the receiver's user list with unread count
-    const senderLastMessage = await Message.findOne({
-      $or: [
-        { senderId: senderId, receiverId: receiverId },
-        { senderId: receiverId, receiverId: senderId },
-      ],
-    }).sort({ createdAt: -1 });
-
-    const senderUnreadCount = await Message.countDocuments({
-      senderId: senderId,
-      receiverId: receiverId,
-      read: false,
-    });
-
-    const senderData = {
-      ...receiverUser.toObject(),
-      lastMessage: senderLastMessage
-        ? {
-            text: senderLastMessage.text,
-            image: senderLastMessage.image,
-            senderId: senderLastMessage.senderId,
-          }
-        : null,
-      lastMessageTime: senderLastMessage ? senderLastMessage.createdAt : null,
-      unreadCount: senderUnreadCount,
-    };
-
-    otherUsersWithLastMessageForReceiver.push(senderData);
-
-    io.to(receiveSocketId).emit(
-      "updatedUsers",
-      otherUsersWithLastMessageForReceiver
-    );
   }
 
-  // Emit updated user data to both sender and receiver
+  // Emit updated user lists to both sender and receiver
   const senderSocketId = getReceiverSocketId(senderId);
   const receiverSocketId = getReceiverSocketId(receiverId);
 
   // Get updated user data for sender
-  const senderUsers = await User.find({
-    _id: { $ne: senderId },
-  }).select("-password");
-
-  const senderUsersWithLastMessage = await Promise.all(
-    senderUsers.map(async (user) => {
-      const lastMessage = await Message.findOne({
-        $or: [
-          { senderId: senderId, receiverId: user._id },
-          { senderId: user._id, receiverId: senderId },
-        ],
-      }).sort({ createdAt: -1 });
-
-      const unreadCount = await Message.countDocuments({
-        senderId: user._id,
-        receiverId: senderId,
-        read: false,
-      });
-
-      return {
-        ...user.toObject(),
-        lastMessage: lastMessage
-          ? {
-              text: lastMessage.text,
-              image: lastMessage.image,
-              senderId: lastMessage.senderId,
-            }
-          : null,
-        lastMessageTime: lastMessage ? lastMessage.createdAt : null,
-        unreadCount,
-      };
-    })
-  );
+  const senderUsersWithLastMessage = await getUsersWithLastMessage(senderId);
 
   // Get updated user data for receiver
-  const receiverUsers = await User.find({
-    _id: { $ne: receiverId },
-  }).select("-password");
-
-  const receiverUsersWithLastMessage = await Promise.all(
-    receiverUsers.map(async (user) => {
-      const lastMessage = await Message.findOne({
-        $or: [
-          { senderId: receiverId, receiverId: user._id },
-          { senderId: user._id, receiverId: receiverId },
-        ],
-      }).sort({ createdAt: -1 });
-
-      const unreadCount = await Message.countDocuments({
-        senderId: user._id,
-        receiverId: receiverId,
-        read: false,
-      });
-
-      return {
-        ...user.toObject(),
-        lastMessage: lastMessage
-          ? {
-              text: lastMessage.text,
-              image: lastMessage.image,
-              senderId: lastMessage.senderId,
-            }
-          : null,
-        lastMessageTime: lastMessage ? lastMessage.createdAt : null,
-        unreadCount,
-      };
-    })
-  );
+  const receiverUsersWithLastMessage = await getUsersWithLastMessage(receiverId);
 
   // Emit updated user lists
   if (senderSocketId) {
@@ -244,17 +77,11 @@ export const sendMessage = asyncHandler(async (req, res) => {
 });
 
 // @route   GET /api/message/:id
-// @desc    Get user messages and mark them as read
+// @desc    Get user messages
 // @access  Private
 export const getMessages = async (req, res) => {
   const { id: userToChatId } = req.params;
   const myId = req.user._id;
-
-  // REMOVED: Side effect moved to explicit markMessagesAsRead endpoint
-  // await Message.updateMany(
-  //   { senderId: userToChatId, receiverId: myId, read: false },
-  //   { read: true }
-  // );
 
   const messages = await Message.find({
     $or: [
@@ -282,93 +109,23 @@ export const markMessagesAsRead = asyncHandler(async (req, res) => {
     { read: true }
   );
 
-  // 1. Update the SENDER's view (User B sees their unread count decrease)
+  // Update the SENDER's view (User B sees their messages are now read)
   const senderSocketId = getReceiverSocketId(userId);
   if (senderSocketId) {
-    const otherUsers = await User.find({
-      _id: { $ne: userId },
-    }).select("-password");
-
-    const otherUsersWithLastMessage = await Promise.all(
-      otherUsers.map(async (user) => {
-        const lastMessage = await Message.findOne({
-          $or: [
-            { senderId: userId, receiverId: user._id },
-            { senderId: user._id, receiverId: userId },
-          ],
-        }).sort({ createdAt: -1 });
-
-        const unreadCount = await Message.countDocuments({
-          senderId: user._id,
-          receiverId: userId,
-          read: false,
-        });
-
-        return {
-          ...user.toObject(),
-          lastMessage: lastMessage
-            ? {
-                text: lastMessage.text,
-                image: lastMessage.image,
-                senderId: lastMessage.senderId,
-              }
-            : null,
-          lastMessageTime: lastMessage ? lastMessage.createdAt : null,
-          unreadCount,
-        };
-      })
-    );
-
-    io.to(senderSocketId).emit("updatedUsers", otherUsersWithLastMessage);
-    // NEW: Emit event to let the sender know their messages were read
-    console.log(`[markMessagesAsRead] Emitting messagesRead to sender: ${userId} at socket: ${senderSocketId}`);
-    if (senderSocketId) {
-      io.to(senderSocketId).emit("messagesRead", {
-        receiverId: myId,
-      });
-    } else {
-      console.log(`[markMessagesAsRead] Sender ${userId} is offline or socket not found`);
-    }
+    const senderUsersWithLastMessage = await getUsersWithLastMessage(userId);
+    io.to(senderSocketId).emit("updatedUsers", senderUsersWithLastMessage);
+    
+    // Emit event to let the sender know their messages were read
+    io.to(senderSocketId).emit("messagesRead", {
+      receiverId: myId,
+    });
   }
 
-  // 2. Update the CURRENT USER's view (User A sees read status updated)
+  // Update the CURRENT USER's view (User A sees updated unread counts)
   const mySocketId = getReceiverSocketId(myId);
   if (mySocketId) {
-    const myOtherUsers = await User.find({
-      _id: { $ne: myId },
-    }).select("-password");
-
-    const myOtherUsersWithLastMessage = await Promise.all(
-      myOtherUsers.map(async (user) => {
-        const lastMessage = await Message.findOne({
-          $or: [
-            { senderId: myId, receiverId: user._id },
-            { senderId: user._id, receiverId: myId },
-          ],
-        }).sort({ createdAt: -1 });
-
-        const unreadCount = await Message.countDocuments({
-          senderId: user._id,
-          receiverId: myId,
-          read: false,
-        });
-
-        return {
-          ...user.toObject(),
-          lastMessage: lastMessage
-            ? {
-                text: lastMessage.text,
-                image: lastMessage.image,
-                senderId: lastMessage.senderId,
-              }
-            : null,
-          lastMessageTime: lastMessage ? lastMessage.createdAt : null,
-          unreadCount,
-        };
-      })
-    );
-
-    io.to(mySocketId).emit("updatedUsers", myOtherUsersWithLastMessage);
+    const myUsersWithLastMessage = await getUsersWithLastMessage(myId);
+    io.to(mySocketId).emit("updatedUsers", myUsersWithLastMessage);
   }
 
   res.status(200).json({

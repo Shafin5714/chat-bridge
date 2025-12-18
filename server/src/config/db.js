@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
-import "colors";
+import logger from "../utils/logger.js";
 
 export const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI);
-    console.log(`Mongodb connected ${conn.connection.host}`.cyan.underline);
+    logger.info(`MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error(`Error: ${error.message}`.red.underline.bold);
+    logger.error(`MongoDB connection error: ${error.message}`);
     process.exit(1); // Exit the process with failure
   }
 };
