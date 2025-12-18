@@ -47,6 +47,14 @@ export const authApi = emptySplitApi.injectEndpoints({
         url: "/auth/logout",
         method: "POST",
       }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(emptySplitApi.util.resetApiState());
+        } catch (err) {
+          console.log(err);
+        }
+      },
     }),
   }),
 });

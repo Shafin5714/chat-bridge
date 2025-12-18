@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { messageApi } from "../api/messageApi";
+import { authApi } from "../api/authApi";
 
 type Message = {
   _id: string;
@@ -52,5 +53,6 @@ export const messageSlice = createSlice({
         state.messages = payload.data;
       },
     );
+    builder.addMatcher(authApi.endpoints.logout.matchFulfilled, () => initialState);
   },
 });
