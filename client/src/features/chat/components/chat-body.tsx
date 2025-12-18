@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import {
   useSendMessageMutation,
   useGetMessagesQuery,
+  useMarkMessagesAsReadMutation,
 } from "@/store/api/messageApi";
 import imageCompression from "browser-image-compression";
 import { skipToken } from "@reduxjs/toolkit/query";
@@ -30,6 +31,7 @@ type Message = {
   senderId: string;
   text: string;
   updatedAt: string;
+  read: boolean;
 };
 
 export default function Chat({ mobileView }: Props) {
@@ -59,8 +61,9 @@ export default function Chat({ mobileView }: Props) {
 
   // api
   const [sendMessage, { isLoading }] = useSendMessageMutation();
+  const [markMessagesAsRead] = useMarkMessagesAsReadMutation();
   const userId = selectedUser?._id ?? skipToken;
-  const { data } = useGetMessagesQuery(userId, {
+  const { data, refetch } = useGetMessagesQuery(userId, {
     refetchOnMountOrArgChange: true,
   });
 
@@ -79,8 +82,33 @@ export default function Chat({ mobileView }: Props) {
   }, [data, messages, isTyping]);
 
   useEffect(() => {
+    if (selectedUser && data?.data && data.data.length > 0) {
+      const hasUnreadMessages = data.data.some(
+        (message) => message.senderId === selectedUser._id && !message.read,
+      );
+
+      if (hasUnreadMessages) {
+        markMessagesAsRead(selectedUser._id);
+        // Update local Redux state immediately
+        dispatch(
+          messageSlice.actions.markMessagesAsReadLocally(selectedUser._id),
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUser?._id, data]);
+
+  useEffect(() => {
     const handleNewMessage = (newMessage: Message) => {
       setNewMessage(newMessage);
+
+      // Auto-mark as read if chat is currently open with this user
+      if (newMessage.senderId === selectedUser?._id) {
+        markMessagesAsRead(selectedUser._id);
+        dispatch(
+          messageSlice.actions.markMessagesAsReadLocally(selectedUser._id),
+        );
+      }
     };
 
     socket?.on("newMessage", handleNewMessage);
@@ -88,7 +116,7 @@ export default function Chat({ mobileView }: Props) {
     return () => {
       socket?.off("newMessage", handleNewMessage);
     };
-  }, [socket]);
+  }, [socket, selectedUser?._id]);
 
   useEffect(() => {
     const isMessageSentFromSelectedUser = newMessage?.senderId === userId;
@@ -121,10 +149,20 @@ export default function Chat({ mobileView }: Props) {
 
     socket?.on("typingMessageGet", handleTypingMessage);
 
+    const handleMessagesRead = (data: { receiverId: string }) => {
+      console.log("[Chat] messagesRead event received for:", data.receiverId);
+      dispatch(messageSlice.actions.markMessagesAsRead(data.receiverId));
+      // Fallback: Refetch messages to ensure consistency if local update fails
+      refetch();
+    };
+    
+    socket?.on("messagesRead", handleMessagesRead);
+
     return () => {
       socket?.off("typingMessageGet", handleTypingMessage);
+      socket?.off("messagesRead", handleMessagesRead);
     };
-  }, [socket]);
+  }, [socket, dispatch, refetch]);
 
   useEffect(() => {
     if (typingData.senderId === userId) {
@@ -276,6 +314,15 @@ export default function Chat({ mobileView }: Props) {
                     )}
                   >
                     {moment(message.createdAt).fromNow()}
+                    {message.senderId === userInfo?.id && (
+                      <span className="ml-2 inline-block">
+                        {message.read ? (
+                          <span className="text-blue-200">✓✓</span>
+                        ) : (
+                          <span className="text-gray-400">✓</span>
+                        )}
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>

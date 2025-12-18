@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { messageApi } from "../api/messageApi";
+import { authApi } from "../api/authApi";
 
 type Message = {
   _id: string;
@@ -9,6 +10,7 @@ type Message = {
   senderId: string;
   text: string;
   updatedAt: string;
+  read: boolean;
 };
 
 type messageState = {
@@ -30,6 +32,19 @@ export const messageSlice = createSlice({
     setMessage: (state, action: PayloadAction<Message>) => {
       state.messages = [...state.messages, action.payload];
     },
+    markMessagesAsReadLocally: (state, action: PayloadAction<string>) => {
+      const senderId = action.payload;
+      state.messages = state.messages.map((msg) =>
+        msg.senderId === senderId ? { ...msg, read: true } : msg,
+      );
+    },
+    // New Reducer for socket event
+    markMessagesAsRead: (state, action: PayloadAction<string>) => {
+       const receiverId = action.payload;
+       state.messages = state.messages.map((msg) => 
+        msg.receiverId === receiverId ? { ...msg, read: true } : msg
+       );
+    },
   },
   extraReducers: (builder) => {
     builder.addMatcher(
@@ -38,5 +53,6 @@ export const messageSlice = createSlice({
         state.messages = payload.data;
       },
     );
+    builder.addMatcher(authApi.endpoints.logout.matchFulfilled, () => initialState);
   },
 });
