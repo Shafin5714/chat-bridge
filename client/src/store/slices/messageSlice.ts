@@ -1,23 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { messageApi } from "../api/messageApi";
 import { authApi } from "../api/authApi";
+import type { Message } from "@/types";
 
-type Message = {
-  _id: string;
-  createdAt: string;
-  image: string;
-  receiverId: string;
-  senderId: string;
-  text: string;
-  updatedAt: string;
-  read: boolean;
-};
-
-type messageState = {
+type MessageState = {
   messages: Message[];
 };
 
-const initialState: messageState = {
+const initialState: MessageState = {
   messages: [],
 };
 

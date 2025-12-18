@@ -1,39 +1,15 @@
 import { emptySplitApi } from "./emptySplitApi";
+import type { Message, User } from "@/types";
 
-type UserResponse = {
+export type UserResponse = {
   success: boolean;
-  data: {
-    _id: string;
-    email: string;
-    name: string;
-    profilePic: string;
-    createdAt: string;
-    updatedAt: string;
-    lastMessage: {
-      text: string;
-      image: string;
-      senderId: string;
-    } | null;
-    lastMessageTime: string | null;
-    unreadCount: number;
-  }[];
+  data: User[];
 };
 
-type SendMessageRequest = {
+export type SendMessageRequest = {
   receiverId: string;
   text: string;
   image: string;
-};
-
-type Message = {
-  _id: string;
-  createdAt: string;
-  image: string;
-  receiverId: string;
-  senderId: string;
-  text: string;
-  updatedAt: string;
-  read: boolean;
 };
 
 type SendMessageResponse = {
