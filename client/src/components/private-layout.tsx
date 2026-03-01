@@ -27,8 +27,7 @@ export default function PrivateLayout() {
     <div className="h-screen">
       <div className="flex h-14 items-center justify-between px-5 py-2">
         <Button variant="ghost" className="gap-2 text-lg">
-          <img src="/icon.png" alt="Chat Bridge Icon" className="h-6 w-auto" />
-          Chat Bridge
+          <img src="/logo.png" alt="Chat Bridge Icon" className="h-10 w-auto" />
         </Button>
         <div className="flex items-center gap-4">
           <ModeToggle />
