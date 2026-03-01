@@ -278,8 +278,14 @@ export default function Chat({ mobileView }: Props) {
               </div>
             ))}
             {isTyping ? (
-              <div className="max-w-[200px] rounded-lg bg-blue-500 p-3 text-white">
-                <i>Typing...</i>
+              <div className="flex justify-start">
+                <div className="w-fit rounded-lg bg-gray-200 p-3 dark:bg-gray-800 dark:text-gray-300">
+                  <div className="typing-dots">
+                    <span className="typing-dot"></span>
+                    <span className="typing-dot"></span>
+                    <span className="typing-dot"></span>
+                  </div>
+                </div>
               </div>
             ) : null}
             <div ref={msgEndRef} />
