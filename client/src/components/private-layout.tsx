@@ -25,7 +25,7 @@ export default function PrivateLayout() {
         </Button>
         <div className="flex items-center gap-4">
           <ModeToggle />
-          <Button variant="outline">
+          <Button variant="outline" className="dark:border-gray-600">
             <User />
             Profile
           </Button>

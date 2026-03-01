@@ -1,4 +1,11 @@
-import { useState, useRef, ChangeEvent, FormEvent, useEffect, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  ChangeEvent,
+  FormEvent,
+  useEffect,
+  useCallback,
+} from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -302,7 +309,7 @@ export default function Chat({ mobileView }: Props) {
               handleSendMessage(e);
               e.stopPropagation();
             }}
-            className="flex w-full space-x-2 items-center"
+            className="flex w-full items-center space-x-2"
           >
             <Input
               type="text"
@@ -316,16 +323,13 @@ export default function Chat({ mobileView }: Props) {
             <div className="relative">
               {showPicker && (
                 <div className="absolute bottom-12 right-0 z-10">
-                  <EmojiPicker
-                    onEmojiClick={onEmojiClick}
-                    theme={Theme.AUTO}
-                  />
+                  <EmojiPicker onEmojiClick={onEmojiClick} theme={Theme.AUTO} />
                 </div>
               )}
               <Button
                 type="button"
                 variant="outline"
-                className="h-10 w-10 px-0"
+                className="h-10 w-10 px-0 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
                 onClick={() => setShowPicker((prev) => !prev)}
               >
                 <Smile className="h-5 w-5 text-gray-500" />
@@ -343,7 +347,7 @@ export default function Chat({ mobileView }: Props) {
 
               <Button
                 type="button"
-                className="h-10 w-14"
+                className="h-10 w-14 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -351,7 +355,7 @@ export default function Chat({ mobileView }: Props) {
                 }}
                 variant="outline"
               >
-                <Image />
+                <Image className="h-5 w-5 text-gray-500" />
               </Button>
             </div>
             <Button

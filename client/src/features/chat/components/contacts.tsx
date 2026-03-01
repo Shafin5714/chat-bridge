@@ -93,7 +93,7 @@ export default function Contacts({ mobileView }: Props) {
             <ScrollArea className="h-[calc(100vh-22rem)] lg:h-[calc(100vh-18rem)]">
               <div className="space-y-2">
                 {/* Filter users based on search term */}
-                {userList.length &&
+                {userList.length > 0 &&
                   userList
                     ?.filter((user) =>
                       user.name
