@@ -11,6 +11,9 @@ import { Circle, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import moment from "moment";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User as UserIcon } from "lucide-react";
+
 type Props = {
   mobileView: string;
 };
@@ -56,11 +59,12 @@ export default function Contacts({ mobileView }: Props) {
         <CardHeader className="h-16 px-4 py-2">
           <h2 className="text-xl font-bold">
             <div className="flex items-center gap-3">
-              <img
-                src="/user-placeholder.png"
-                alt="user"
-                className="h-10 w-10"
-              />
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={userInfo?.profilePic} />
+                <AvatarFallback>
+                  <UserIcon className="h-6 w-6" />
+                </AvatarFallback>
+              </Avatar>
               <div className="flex flex-col">
                 <h2 className="text-base font-medium leading-normal text-gray-800 dark:text-[#E1E1E1]">
                   {userInfo?.name}
@@ -116,11 +120,12 @@ export default function Contacts({ mobileView }: Props) {
                         <div className="flex w-full justify-between px-2 py-1">
                           <div className="flex gap-3">
                             <div className="relative">
-                              <img
-                                src="user-placeholder.png"
-                                alt="user"
-                                className="h-14 w-14"
-                              />
+                              <Avatar className="h-14 w-14">
+                                <AvatarImage src={user.profilePic} />
+                                <AvatarFallback>
+                                  <UserIcon className="h-8 w-8 text-muted-foreground" />
+                                </AvatarFallback>
+                              </Avatar>
                               <p className="absolute bottom-1 right-1 text-xs text-gray-500">
                                 {onlineUsers.includes(user._id) ? (
                                   <Circle

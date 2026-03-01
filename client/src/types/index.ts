@@ -34,6 +34,7 @@ export type UserInfo = {
   id: string;
   name: string;
   email: string;
+  profilePic?: string;
 };
 
 export type TypingData = {

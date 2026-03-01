@@ -27,6 +27,9 @@ import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 import type { Message } from "@/types";
 import { useChatSocket, useTypingIndicator } from "../hooks";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User as UserIcon } from "lucide-react";
+
 type Props = {
   mobileView: string;
 };
@@ -188,11 +191,12 @@ export default function Chat({ mobileView }: Props) {
       <CardHeader className="h-16 px-4 py-3">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <img
-              src="/user-placeholder.png"
-              alt="user image"
-              className="h-10 w-10 rounded-full object-cover"
-            />
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={selectedUser?.profilePic} />
+              <AvatarFallback>
+                <UserIcon className="h-6 w-6 text-muted-foreground" />
+              </AvatarFallback>
+            </Avatar>
             <p className="absolute bottom-[1px] right-1 text-xs text-gray-500">
               {userOnline ? (
                 <Circle fill="green" size={12} strokeWidth={0} />

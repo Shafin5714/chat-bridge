@@ -31,6 +31,7 @@ export const register = asyncHandler(async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        profilePic: user.profilePic,
       },
     });
   } else {
@@ -57,6 +58,7 @@ export const login = asyncHandler(async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        profilePic: user.profilePic,
       },
     });
   } else {
