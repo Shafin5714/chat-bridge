@@ -1,7 +1,7 @@
 import { ModeToggle } from "./mode-toggle";
 import { Outlet } from "react-router";
 import { Button } from "./ui/button";
-import { LogOut, User, MessageSquare } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { useLogoutMutation } from "@/store/api/authApi";
 import { toast } from "sonner";
 
@@ -19,8 +19,8 @@ export default function PrivateLayout() {
   return (
     <div className="h-screen">
       <div className="flex h-14 items-center justify-between px-5 py-2">
-        <Button variant="ghost" className="text-lg">
-          <MessageSquare />
+        <Button variant="ghost" className="gap-2 text-lg">
+          <img src="/icon.png" alt="Chat Bridge Icon" className="h-6 w-auto" />
           Chat Bridge
         </Button>
         <div className="flex items-center gap-4">

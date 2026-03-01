@@ -66,7 +66,14 @@ export function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-md shadow-lg sm:shadow-xl">
-        <CardHeader className="space-y-1 px-4 pt-6 sm:px-6">
+        <CardHeader className="space-y-1 px-4 pt-6 text-center sm:px-6">
+          <div className="mb-4 flex justify-center">
+            <img
+              src="/logo.png"
+              alt="Chat Bridge Logo"
+              className="h-20 w-auto object-contain drop-shadow-md sm:h-24"
+            />
+          </div>
           <CardTitle className="text-xl font-bold sm:text-2xl">Login</CardTitle>
           <CardDescription className="text-sm sm:text-base">
             Enter your details below to login to your account
