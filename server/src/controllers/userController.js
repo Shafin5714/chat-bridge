@@ -49,3 +49,17 @@ export const updateProfile = asyncHandler(async (req, res) => {
     },
   });
 });
+
+// @route   GET /api/users
+// @desc    Get all users except the logged-in user
+// @access  Private
+export const getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find({ _id: { $ne: req.user._id } }).select(
+    "-password"
+  );
+
+  res.status(200).json({
+    success: true,
+    data: users,
+  });
+});

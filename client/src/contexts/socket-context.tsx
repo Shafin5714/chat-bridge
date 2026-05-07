@@ -8,8 +8,9 @@ import {
   useRef,
 } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { userSlice } from "@/store/slices";
+import { conversationSlice } from "@/store/slices";
 import { BACKEND_URL } from "@/constants";
+import type { Conversation } from "@/types";
 
 type Props = {
   children: ReactNode;
@@ -20,7 +21,6 @@ const SocketContext = createContext<{
 }>({
   socket: null,
 });
-
 
 export const SocketProvider = ({ children }: Props) => {
   const socketRef = useRef<Socket | null>(null);
@@ -39,9 +39,14 @@ export const SocketProvider = ({ children }: Props) => {
       socketRef.current = newSocket;
       setSocket(newSocket);
 
-      // Listen for updated users from socket
-      newSocket.on("updatedUsers", (users) => {
-        dispatch(userSlice.actions.setUsers(users));
+      // Listen for online users
+      newSocket.on("getOnlineUsers", (data: string[]) => {
+        dispatch(conversationSlice.actions.setOnlineUsers(data));
+      });
+
+      // Listen for conversation updates
+      newSocket.on("conversationUpdated", (conversation: Conversation) => {
+        dispatch(conversationSlice.actions.updateConversation(conversation));
       });
     } else {
       if (socketRef.current) {
@@ -59,7 +64,6 @@ export const SocketProvider = ({ children }: Props) => {
       }
     };
   }, [userInfo, dispatch]);
-
 
   return (
     <SocketContext.Provider value={{ socket }}>

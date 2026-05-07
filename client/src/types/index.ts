@@ -7,11 +7,16 @@ export type Message = {
   _id: string;
   createdAt: string;
   image: string;
-  receiverId: string;
-  senderId: string;
+  conversationId: string;
+  senderId:
+    | string
+    | {
+        _id: string;
+        name: string;
+        profilePic?: string;
+      };
   text: string;
   updatedAt: string;
-  read: boolean;
 };
 
 export type User = {
@@ -21,13 +26,18 @@ export type User = {
   profilePic?: string;
   createdAt?: string;
   updatedAt?: string;
-  lastMessage: {
-    text: string;
-    image: string;
-    senderId: string;
-  } | null;
-  lastMessageTime: string | null;
-  unreadCount: number;
+};
+
+export type Conversation = {
+  _id: string;
+  type: "dm" | "group";
+  name: string | null;
+  avatar: string | null;
+  admin: string | null;
+  members: User[];
+  lastMessage: Message | null;
+  updatedAt: string;
+  createdAt: string;
 };
 
 export type UserInfo = {
@@ -39,7 +49,7 @@ export type UserInfo = {
 
 export type TypingData = {
   senderId: string;
-  receiverId: string;
+  conversationId: string;
   isTyping: boolean;
 };
 

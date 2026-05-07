@@ -1,53 +1,102 @@
 import { Card, CardHeader } from "@/components/ui/card";
-import { useGetUsersQuery } from "@/store/api/messageApi";
+import { useGetConversationsQuery } from "@/store/api/conversationApi";
+import { conversationApi } from "@/store/api/conversationApi";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { userSlice } from "@/store/slices";
+import { conversationSlice } from "@/store/slices";
 import { useSocketContext } from "@/contexts/socket-context";
 import { useEffect, useState } from "react";
-import { Circle, Search } from "lucide-react";
+import { Circle, Search, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import moment from "moment";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User as UserIcon } from "lucide-react";
+import CreateGroupModal from "./create-group-modal";
+import NewChatModal from "./new-chat-modal";
+import type { Conversation, User } from "@/types";
 
 type Props = {
   mobileView: string;
 };
 
 export default function Contacts({ mobileView }: Props) {
-  // hooks
   const { socket } = useSocketContext();
   const dispatch = useAppDispatch();
 
   // api
-  useGetUsersQuery();
+  useGetConversationsQuery();
 
   // state
   const [searchTerm, setSearchTerm] = useState("");
-  const { userList, selectedUser, onlineUsers } = useAppSelector(
-    (state) => state.user,
+  const { conversations, selectedConversation, onlineUsers } = useAppSelector(
+    (state) => state.conversation,
   );
   const userInfo = useAppSelector((state) => state.auth.userInfo);
 
   useEffect(() => {
-    socket?.on("getOnlineUsers", (data) => {
-      dispatch(userSlice.actions.setOnlineUsers(data));
-    });
-
-    // Listen for updated users from socket
-    socket?.on("updatedUsers", (users) => {
-      dispatch(userSlice.actions.setUsers(users));
+    socket?.on("getOnlineUsers", (data: string[]) => {
+      dispatch(conversationSlice.actions.setOnlineUsers(data));
     });
 
     return () => {
       socket?.off("getOnlineUsers");
-      socket?.off("updatedUsers");
     };
   }, [dispatch, socket]);
+
+  /**
+   * For a DM conversation, get the other user (not the current user).
+   */
+  const getOtherUser = (conv: Conversation): User | undefined => {
+    return conv.members.find((m) => m._id !== userInfo?.id);
+  };
+
+  /**
+   * Get the display name for a conversation.
+   */
+  const getConversationName = (conv: Conversation): string => {
+    if (conv.type === "group") return conv.name || "Unnamed Group";
+    const other = getOtherUser(conv);
+    return other?.name || "Unknown User";
+  };
+
+  /**
+   * Get the avatar for a conversation.
+   */
+  const getConversationAvatar = (conv: Conversation): string | undefined => {
+    if (conv.type === "group") return conv.avatar || undefined;
+    const other = getOtherUser(conv);
+    return other?.profilePic;
+  };
+
+  /**
+   * Check if a DM partner is online.
+   */
+  const isDMOnline = (conv: Conversation): boolean => {
+    if (conv.type !== "dm") return false;
+    const other = getOtherUser(conv);
+    return other ? onlineUsers.includes(other._id) : false;
+  };
+
+  /**
+   * Get last message preview text.
+   */
+  const getLastMessageText = (conv: Conversation): string => {
+    if (!conv.lastMessage) return "No messages yet";
+    if (conv.lastMessage.image && !conv.lastMessage.text) return "📷 Image";
+    return conv.lastMessage.text || "No messages yet";
+  };
+
+  // Fetch ALL registered users for New Chat and Create Group modals
+  const { data: allUsersData } = conversationApi.useGetAllUsersQuery();
+  const allUsers: User[] = allUsersData?.data || [];
+
+  const filteredConversations = conversations.filter((conv) => {
+    const name = getConversationName(conv);
+    return name.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   return (
     <div>
@@ -79,16 +128,20 @@ export default function Contacts({ mobileView }: Props) {
         <Separator className="dark:bg-gray-700" />
         <div>
           {/* Search Input */}
-          <div className="p-3">
+          <div className="space-y-2 p-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search contacts..."
+                placeholder="Search conversations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 bg-background py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+            <div className="flex gap-2">
+              <NewChatModal allUsers={allUsers} />
+              <CreateGroupModal allUsers={allUsers} />
             </div>
           </div>
 
@@ -96,23 +149,20 @@ export default function Contacts({ mobileView }: Props) {
           <div className="p-3">
             <ScrollArea className="h-[calc(100vh-22rem)] lg:h-[calc(100vh-18rem)]">
               <div className="space-y-2">
-                {/* Filter users based on search term */}
-                {userList.length > 0 &&
-                  userList
-                    ?.filter((user) =>
-                      user.name
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase()),
-                    )
-                    .map((user) => (
+                {filteredConversations.length > 0 &&
+                  filteredConversations.map((conv) => {
+                    const isOnline = isDMOnline(conv);
+                    return (
                       <div
-                        key={user._id}
+                        key={conv._id}
                         onClick={() =>
-                          dispatch(userSlice.actions.setSelectedUser(user))
+                          dispatch(
+                            conversationSlice.actions.setSelectedConversation(conv)
+                          )
                         }
                         className={cn(
                           "flex cursor-pointer items-center space-x-4 rounded-lg p-2 transition-colors duration-200",
-                          selectedUser?._id === user._id
+                          selectedConversation?._id === conv._id
                             ? "bg-blue-500/10"
                             : "hover:bg-gray-50 dark:hover:bg-blue-700/10",
                         )}
@@ -121,34 +171,40 @@ export default function Contacts({ mobileView }: Props) {
                           <div className="flex gap-3">
                             <div className="relative">
                               <Avatar className="h-14 w-14">
-                                <AvatarImage src={user.profilePic} />
+                                <AvatarImage src={getConversationAvatar(conv)} />
                                 <AvatarFallback>
-                                  <UserIcon className="h-8 w-8 text-muted-foreground" />
+                                  {conv.type === "group" ? (
+                                    <Users className="h-7 w-7 text-muted-foreground" />
+                                  ) : (
+                                    <UserIcon className="h-8 w-8 text-muted-foreground" />
+                                  )}
                                 </AvatarFallback>
                               </Avatar>
-                              <p className="absolute bottom-1 right-1 text-xs text-gray-500">
-                                {onlineUsers.includes(user._id) ? (
-                                  <Circle
-                                    fill="green"
-                                    size={12}
-                                    strokeWidth={0}
-                                  />
-                                ) : (
-                                  <Circle
-                                    fill="red"
-                                    size={12}
-                                    strokeWidth={0}
-                                  />
-                                )}
-                              </p>
+                              {conv.type === "dm" && (
+                                <p className="absolute bottom-1 right-1 text-xs text-gray-500">
+                                  {isOnline ? (
+                                    <Circle
+                                      fill="green"
+                                      size={12}
+                                      strokeWidth={0}
+                                    />
+                                  ) : (
+                                    <Circle
+                                      fill="red"
+                                      size={12}
+                                      strokeWidth={0}
+                                    />
+                                  )}
+                                </p>
+                              )}
                             </div>
 
                             <div className="flex flex-col gap-1">
                               <p className="line-clamp-1 text-base font-medium leading-normal text-gray-900 dark:text-[#E1E1E1]">
-                                {user.name}
+                                {getConversationName(conv)}
                               </p>
                               <p className="leading-norma line-clamp-1 text-sm font-medium text-gray-500 dark:text-gray-400">
-                                {user.lastMessage?.text || "No messages yet"}
+                                {getLastMessageText(conv)}
                               </p>
                             </div>
                           </div>
@@ -156,25 +212,23 @@ export default function Contacts({ mobileView }: Props) {
                           <div>
                             <div className="shrink-0 text-right">
                               <p className="text-xs font-normal leading-normal text-gray-500">
-                                {user.lastMessageTime
-                                  ? moment(user.lastMessageTime).format(
+                                {conv.lastMessage?.createdAt
+                                  ? moment(conv.lastMessage.createdAt).format(
                                       "h:mm a",
                                     )
                                   : ""}
                               </p>
-
-                              {user.unreadCount > 0 && (
-                                <div className="mt-1 flex justify-end">
-                                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs font-semibold text-white">
-                                    {user.unreadCount}
-                                  </div>
-                                </div>
+                              {conv.type === "group" && (
+                                <p className="mt-1 text-xs text-gray-400">
+                                  {conv.members.length} members
+                                </p>
                               )}
                             </div>
                           </div>
                         </div>
                       </div>
-                    ))}
+                    );
+                  })}
               </div>
             </ScrollArea>
           </div>

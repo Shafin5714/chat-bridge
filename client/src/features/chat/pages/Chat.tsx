@@ -12,7 +12,9 @@ export const Chat = () => {
     "chat",
   );
 
-  const { selectedUser } = useAppSelector((state) => state.user);
+  const { selectedConversation } = useAppSelector(
+    (state) => state.conversation,
+  );
 
   return (
     <div className="h-full bg-gray-200 px-4 py-3 dark:bg-gray-700">
@@ -26,7 +28,7 @@ export const Chat = () => {
         {/* Contacts */}
         <ChatList mobileView={mobileView} />
 
-        {selectedUser ? (
+        {selectedConversation ? (
           <>
             {/* Chat */}
             <ChatBody mobileView={mobileView} />

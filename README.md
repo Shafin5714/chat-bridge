@@ -29,18 +29,18 @@
 - Bi-directional infinite scroll with cursor-based pagination (jump to history)
 - Advanced message search with keyword highlighting
 - Text and image message support
-- Read receipts with live status sync
 - Live typing indicators
 
 </td>
 <td width="50%">
 
-### 👥 User Presence
+### 👥 Group Chat & Conversations
 
-- Real-time online/offline status
-- Contact list with last message preview
-- Unread message count badges
-- User profile with avatar uploads
+- Direct message (DM) and group unified architecture
+- Create group chats with multiple members
+- Group admin with member management (add/remove)
+- Room-based Socket.IO broadcasting
+- Multi-user typing indicators in groups
 
 </td>
 </tr>
@@ -62,6 +62,7 @@
 - Dark / Light theme toggle
 - Fully responsive (mobile-first design)
 - Emoji picker integration
+- Real-time online/offline status
 - Accessible UI with Radix primitives
 
 </td>
@@ -243,20 +244,31 @@ npm run dev
 | `POST` | `/api/auth/login`    | Login and receive JWT cookie |
 | `POST` | `/api/auth/logout`   | Clear auth cookie            |
 
+### Conversations
+
+| Method   | Endpoint                                    | Description                                  |
+| -------- | ------------------------------------------- | -------------------------------------------- |
+| `GET`    | `/api/conversations`                        | Get all conversations for the logged-in user |
+| `POST`   | `/api/conversations/dm`                     | Get or create a DM conversation              |
+| `POST`   | `/api/conversations/group`                  | Create a new group conversation              |
+| `PUT`    | `/api/conversations/group/:id`              | Update group name/avatar (admin only)        |
+| `PUT`    | `/api/conversations/group/:id/members`      | Add members to group (admin only)            |
+| `DELETE` | `/api/conversations/group/:id/members/:uid` | Remove a member (admin only)                 |
+| `POST`   | `/api/conversations/group/:id/leave`        | Leave a group conversation                   |
+
 ### Messages
 
-| Method | Endpoint                | Description                                   |
-| ------ | ----------------------- | --------------------------------------------- |
-| `GET`  | `/api/message/users`    | Get contacts with last message & unread count |
-| `GET`  | `/api/message/:id`      | Get paginated conversation history            |
-| `GET`  | `/api/message/search/:id`| Search for specific messages by keyword       |
-| `POST` | `/api/message/send/:id` | Send a text or image message                  |
-| `PUT`  | `/api/message/read/:id` | Mark messages from a user as read             |
+| Method | Endpoint                              | Description                                  |
+| ------ | ------------------------------------- | -------------------------------------------- |
+| `GET`  | `/api/message/:conversationId`        | Get paginated conversation history           |
+| `GET`  | `/api/message/search/:conversationId` | Search messages by keyword in a conversation |
+| `POST` | `/api/message/send/:conversationId`   | Send a text or image message                 |
 
 ### Users
 
 | Method | Endpoint             | Description                   |
 | ------ | -------------------- | ----------------------------- |
+| `GET`  | `/api/users`         | Get all registered users      |
 | `PUT`  | `/api/users/profile` | Update profile (name, avatar) |
 
 ### WebSocket Events

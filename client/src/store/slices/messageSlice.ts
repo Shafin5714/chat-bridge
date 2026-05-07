@@ -30,19 +30,6 @@ export const messageSlice = createSlice({
     setMessage: (state, action: PayloadAction<Message>) => {
       state.messages = [...state.messages, action.payload];
     },
-    markMessagesAsReadLocally: (state, action: PayloadAction<string>) => {
-      const senderId = action.payload;
-      state.messages = state.messages.map((msg) =>
-        msg.senderId === senderId ? { ...msg, read: true } : msg,
-      );
-    },
-    // New Reducer for socket event
-    markMessagesAsRead: (state, action: PayloadAction<string>) => {
-       const receiverId = action.payload;
-       state.messages = state.messages.map((msg) => 
-        msg.receiverId === receiverId ? { ...msg, read: true } : msg
-       );
-    },
   },
   extraReducers: (builder) => {
     builder.addMatcher(
@@ -58,18 +45,23 @@ export const messageSlice = createSlice({
         } else {
           state.messages = payload.data;
         }
-        
-        state.hasMoreOlder = payload.pagination.hasMoreOlder ?? state.hasMoreOlder;
+
+        state.hasMoreOlder =
+          payload.pagination.hasMoreOlder ?? state.hasMoreOlder;
         if (payload.pagination.olderCursor !== undefined) {
           state.olderCursor = payload.pagination.olderCursor;
         }
-        
-        state.hasMoreNewer = payload.pagination.hasMoreNewer ?? state.hasMoreNewer;
+
+        state.hasMoreNewer =
+          payload.pagination.hasMoreNewer ?? state.hasMoreNewer;
         if (payload.pagination.newerCursor !== undefined) {
           state.newerCursor = payload.pagination.newerCursor;
         }
-      },
+      }
     );
-    builder.addMatcher(authApi.endpoints.logout.matchFulfilled, () => initialState);
+    builder.addMatcher(
+      authApi.endpoints.logout.matchFulfilled,
+      () => initialState
+    );
   },
 });

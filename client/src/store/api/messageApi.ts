@@ -1,13 +1,8 @@
 import { emptySplitApi } from "./emptySplitApi";
-import type { Message, User, PaginatedMessagesResponse } from "@/types";
-
-export type UserResponse = {
-  success: boolean;
-  data: User[];
-};
+import type { Message, PaginatedMessagesResponse } from "@/types";
 
 export type SendMessageRequest = {
-  receiverId: string;
+  conversationId: string;
   text: string;
   image: string;
 };
@@ -24,14 +19,9 @@ type GetMessagesResponse = {
 
 export const messageApi = emptySplitApi.injectEndpoints({
   endpoints: (builder) => ({
-    getUsers: builder.query<UserResponse, void>({
-      query: () => ({ url: "/message/users" }),
-      providesTags: ["Users"],
-      transformResponse: (response: UserResponse) => response,
-    }),
     sendMessage: builder.mutation<SendMessageResponse, SendMessageRequest>({
       query: (data) => ({
-        url: `/message/send/${data.receiverId}`,
+        url: `/message/send/${data.conversationId}`,
         method: "POST",
         body: {
           text: data.text,
@@ -41,21 +31,24 @@ export const messageApi = emptySplitApi.injectEndpoints({
     }),
     getMessages: builder.query<
       PaginatedMessagesResponse,
-      { userId: string; cursor?: string | null; newerCursor?: string | null; around?: string | null }
+      { conversationId: string; cursor?: string | null; newerCursor?: string | null; around?: string | null }
     >({
-      query: ({ userId, cursor, newerCursor, around }) => ({
-        url: `/message/${userId}`,
-        params: { ...(cursor ? { cursor } : {}), ...(newerCursor ? { newerCursor } : {}), ...(around ? { around } : {}), limit: 30 },
+      query: ({ conversationId, cursor, newerCursor, around }) => ({
+        url: `/message/${conversationId}`,
+        params: {
+          ...(cursor ? { cursor } : {}),
+          ...(newerCursor ? { newerCursor } : {}),
+          ...(around ? { around } : {}),
+          limit: 30,
+        },
       }),
       providesTags: ["Message"],
-      serializeQueryArgs: ({ queryArgs }) => queryArgs.userId,
+      serializeQueryArgs: ({ queryArgs }) => queryArgs.conversationId,
       merge: (currentCache, newItems, { arg }) => {
         if (arg.around) {
-          // Replace cache when jumping
           return newItems;
         }
         if (arg.newerCursor) {
-          // Append to bottom
           return {
             ...newItems,
             data: [...currentCache.data, ...newItems.data],
@@ -67,7 +60,6 @@ export const messageApi = emptySplitApi.injectEndpoints({
           };
         }
         if (arg.cursor) {
-          // Prepend to top
           return {
             ...newItems,
             data: [...newItems.data, ...currentCache.data],
@@ -84,40 +76,19 @@ export const messageApi = emptySplitApi.injectEndpoints({
         return currentArg !== previousArg;
       },
     }),
-    markMessagesAsRead: builder.mutation<void, string>({
-      query: (id) => ({
-        url: `/message/read/${id}`,
-        method: "PUT",
-      }),
-      onQueryStarted: (id, { dispatch }) => {
-        // Update the cache optimistically
-        dispatch(
-          messageApi.util.updateQueryData("getMessages", { userId: id }, (draft) => {
-            // Mark all messages from this user as read
-            draft.data.forEach((message) => {
-              if (message.senderId === id) {
-                message.read = true;
-              }
-            });
-          }),
-        );
-      },
-    }),
     searchMessages: builder.query<
       GetMessagesResponse,
-      { userId: string; q: string }
+      { conversationId: string; q: string }
     >({
-      query: ({ userId, q }) => ({
-        url: `/message/search/${userId}?q=${encodeURIComponent(q)}`,
+      query: ({ conversationId, q }) => ({
+        url: `/message/search/${conversationId}?q=${encodeURIComponent(q)}`,
       }),
     }),
   }),
 });
 
 export const {
-  useGetUsersQuery,
   useSendMessageMutation,
   useGetMessagesQuery,
-  useMarkMessagesAsReadMutation,
   useLazySearchMessagesQuery,
 } = messageApi;

@@ -1,28 +1,26 @@
 import { useEffect, useCallback } from "react";
 import { useAppDispatch } from "@/store";
 import { useSocketContext } from "@/contexts/socket-context";
-import { messageSlice } from "@/store/slices";
-import { useMarkMessagesAsReadMutation } from "@/store/api/messageApi";
-import type { Message } from "@/types";
+import { messageSlice, conversationSlice } from "@/store/slices";
+import type { Message, Conversation } from "@/types";
 
 type UseChatSocketOptions = {
-  selectedUserId: string | undefined;
+  selectedConversationId: string | undefined;
   onNewMessage: (message: Message) => void;
   refetch: () => void;
 };
 
 /**
  * Custom hook to handle socket events for chat functionality.
- * Manages newMessage and messagesRead socket events.
+ * Manages newMessage and conversationUpdated socket events.
  */
 export function useChatSocket({
-  selectedUserId,
+  selectedConversationId,
   onNewMessage,
   refetch,
 }: UseChatSocketOptions) {
   const { socket } = useSocketContext();
   const dispatch = useAppDispatch();
-  const [markMessagesAsRead] = useMarkMessagesAsReadMutation();
 
   // Handle incoming new messages
   useEffect(() => {
@@ -30,45 +28,20 @@ export function useChatSocket({
 
     const handleNewMessage = (newMessage: Message) => {
       onNewMessage(newMessage);
+    };
 
-      // Auto-mark as read if chat is currently open with this user
-      if (selectedUserId && newMessage.senderId === selectedUserId) {
-        markMessagesAsRead(selectedUserId);
-        dispatch(messageSlice.actions.markMessagesAsReadLocally(selectedUserId));
-      }
+    const handleConversationUpdated = (conversation: Conversation) => {
+      dispatch(conversationSlice.actions.updateConversation(conversation));
     };
 
     socket.on("newMessage", handleNewMessage);
+    socket.on("conversationUpdated", handleConversationUpdated);
 
     return () => {
       socket.off("newMessage", handleNewMessage);
+      socket.off("conversationUpdated", handleConversationUpdated);
     };
-  }, [socket, selectedUserId, onNewMessage, markMessagesAsRead, dispatch]);
+  }, [socket, selectedConversationId, onNewMessage, dispatch]);
 
-  // Handle messages read events from other users
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleMessagesRead = (data: { receiverId: string }) => {
-      dispatch(messageSlice.actions.markMessagesAsRead(data.receiverId));
-      // Fallback: Refetch messages to ensure consistency
-      refetch();
-    };
-
-    socket.on("messagesRead", handleMessagesRead);
-
-    return () => {
-      socket.off("messagesRead", handleMessagesRead);
-    };
-  }, [socket, dispatch, refetch]);
-
-  // Mark messages as read when chat is opened
-  const markAsRead = useCallback(() => {
-    if (selectedUserId) {
-      markMessagesAsRead(selectedUserId);
-      dispatch(messageSlice.actions.markMessagesAsReadLocally(selectedUserId));
-    }
-  }, [selectedUserId, markMessagesAsRead, dispatch]);
-
-  return { markAsRead };
+  return {};
 }

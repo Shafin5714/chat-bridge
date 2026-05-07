@@ -2,12 +2,12 @@ import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema(
   {
-    senderId: {
+    conversationId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Conversation",
       required: true,
     },
-    receiverId: {
+    senderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -18,20 +18,16 @@ const messageSchema = new mongoose.Schema(
     image: {
       type: String,
     },
-    read: {
-      type: Boolean,
-      default: false,
-    },
   },
   { timestamps: true }
 );
 
 // Indexes for faster queries
-messageSchema.index({ senderId: 1, receiverId: 1 });
-messageSchema.index({ createdAt: -1 });
-messageSchema.index({ senderId: 1, receiverId: 1, read: 1 });
+messageSchema.index({ conversationId: 1, createdAt: -1 });
+messageSchema.index({ conversationId: 1 });
 messageSchema.index({ text: "text" });
 
 const Message = mongoose.model("Message", messageSchema);
 
 export default Message;
+

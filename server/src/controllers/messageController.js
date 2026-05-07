@@ -1,35 +1,32 @@
 import asyncHandler from "../middlewares/asyncHandler.js";
-import User from "../models/userModel.js";
 import cloudinary from "../lib/cloudinary.js";
 import Message from "../models/messageModel.js";
-import { io, getReceiverSocketId } from "../lib/socket.js";
-import { getUsersWithLastMessage } from "../services/userService.js";
+import Conversation from "../models/conversationModel.js";
+import { io } from "../lib/socket.js";
 
-// @route   GET /api/message/users
-// @desc    Get all users except the logged in user with last message
-// @access  Private
-// @returns { success, data: {_id, email, name, profilePic, createdAt, updatedAt, lastMessage, lastMessageTime, unreadCount}[]}
-export const getUsers = asyncHandler(async (req, res) => {
-  const loggedInUser = req.user._id;
-  const usersWithLastMessage = await getUsersWithLastMessage(loggedInUser);
-
-  res.status(200).json({
-    success: true,
-    data: usersWithLastMessage,
-  });
-});
-
-// @route   POST /api/message/send/:id
-// @desc    Send message
+// @route   POST /api/message/send/:conversationId
+// @desc    Send message to a conversation
 // @access  Private
 export const sendMessage = asyncHandler(async (req, res) => {
   const { text, image } = req.body;
-  const { id: receiverId } = req.params;
+  const { conversationId } = req.params;
   const senderId = req.user._id;
+
+  // Verify conversation exists and user is a member
+  const conversation = await Conversation.findById(conversationId);
+  if (!conversation) {
+    return res.status(404).json({ success: false, message: "Conversation not found" });
+  }
+
+  const isMember = conversation.members.some(
+    (m) => m.toString() === senderId.toString()
+  );
+  if (!isMember) {
+    return res.status(403).json({ success: false, message: "Not a member of this conversation" });
+  }
 
   let imageUrl;
   if (image) {
-    // Upload base64 image to cloudinary
     const uploadResponse = await cloudinary.uploader.upload(image, {
       folder: "chat-bridge",
     });
@@ -37,85 +34,83 @@ export const sendMessage = asyncHandler(async (req, res) => {
   }
 
   const newMessage = new Message({
+    conversationId,
     senderId,
-    receiverId,
     text,
     image: imageUrl,
-    read: false,
   });
 
   await newMessage.save();
 
-  // Emit new message to receiver
-  const receiveSocketId = getReceiverSocketId(receiverId);
-  if (receiveSocketId) {
-    io.to(receiveSocketId).emit("newMessage", newMessage);
-  }
+  // Update conversation's lastMessage and bump updatedAt
+  conversation.lastMessage = newMessage._id;
+  await conversation.save();
 
-  // Emit updated user lists to both sender and receiver
-  const senderSocketId = getReceiverSocketId(senderId);
-  const receiverSocketId = getReceiverSocketId(receiverId);
+  // Populate sender info for the emitted message
+  const populatedMessage = await Message.findById(newMessage._id).populate(
+    "senderId",
+    "name profilePic"
+  );
 
-  // Get updated user data for sender
-  const senderUsersWithLastMessage = await getUsersWithLastMessage(senderId);
+  // Emit to the conversation room (all members)
+  io.to(conversationId).emit("newMessage", populatedMessage);
 
-  // Get updated user data for receiver
-  const receiverUsersWithLastMessage = await getUsersWithLastMessage(receiverId);
-
-  // Emit updated user lists
-  if (senderSocketId) {
-    io.to(senderSocketId).emit("updatedUsers", senderUsersWithLastMessage);
-  }
-  if (receiverSocketId) {
-    io.to(receiverSocketId).emit("updatedUsers", receiverUsersWithLastMessage);
-  }
+  // Emit updated conversation to all members
+  const updatedConversation = await Conversation.findById(conversationId)
+    .populate("members", "-password")
+    .populate("lastMessage");
+  io.to(conversationId).emit("conversationUpdated", updatedConversation);
 
   res.status(201).json({
     success: true,
-    data: newMessage,
+    data: populatedMessage,
   });
 });
 
-// @route   GET /api/message/:id
-// @desc    Get user messages
+// @route   GET /api/message/:conversationId
+// @desc    Get messages for a conversation
 // @access  Private
 export const getMessages = asyncHandler(async (req, res) => {
-  const { id: userToChatId } = req.params;
+  const { conversationId } = req.params;
   const myId = req.user._id;
   const { cursor, newerCursor, around, limit: rawLimit } = req.query;
 
   const limit = Math.min(parseInt(rawLimit) || 30, 50);
 
-  const baseFilter = {
-    $or: [
-      { senderId: myId, receiverId: userToChatId },
-      { senderId: userToChatId, receiverId: myId },
-    ],
-  };
+  // Verify membership
+  const conversation = await Conversation.findById(conversationId);
+  if (!conversation) {
+    return res.status(404).json({ success: false, message: "Conversation not found" });
+  }
+  const memberCheck = conversation.members.some(
+    (m) => m.toString() === myId.toString()
+  );
+  if (!memberCheck) {
+    return res.status(403).json({ success: false, message: "Not a member" });
+  }
+
+  const baseFilter = { conversationId };
 
   if (around) {
-    // Mode 3: Fetch 'around' a specific message
     const halfLimit = Math.floor(limit / 2);
-    
-    // Find older
+
     const olderMessages = await Message.find({ ...baseFilter, _id: { $lt: around } })
       .sort({ createdAt: -1 })
       .limit(halfLimit + 1);
-    
+
     const hasMoreOlder = olderMessages.length > halfLimit;
     if (hasMoreOlder) olderMessages.pop();
     olderMessages.reverse();
-    
-    // Find newer (and the message itself)
+
     const newerMessages = await Message.find({ ...baseFilter, _id: { $gte: around } })
       .sort({ createdAt: 1 })
       .limit(limit - halfLimit + 1);
-      
+
     const hasMoreNewer = newerMessages.length > (limit - halfLimit);
     if (hasMoreNewer) newerMessages.pop();
-    
+
     const messages = [...olderMessages, ...newerMessages];
-    
+
     return res.status(200).json({
       success: true,
       data: messages,
@@ -130,20 +125,19 @@ export const getMessages = asyncHandler(async (req, res) => {
   }
 
   if (newerCursor) {
-    // Mode 2: Fetch newer
     const messages = await Message.find({ ...baseFilter, _id: { $gt: newerCursor } })
       .sort({ createdAt: 1 })
       .limit(limit + 1);
 
     const hasMoreNewer = messages.length > limit;
     if (hasMoreNewer) messages.pop();
-    
+
     return res.status(200).json({
       success: true,
       data: messages,
       pagination: {
-        olderCursor: null, // Client should preserve its existing olderCursor
-        hasMoreOlder: null, // Client should preserve
+        olderCursor: null,
+        hasMoreOlder: null,
         newerCursor: messages.length > 0 ? messages[messages.length - 1]._id : null,
         hasMoreNewer,
         limit,
@@ -151,7 +145,7 @@ export const getMessages = asyncHandler(async (req, res) => {
     });
   }
 
-  // Mode 1: Fetch older (or initial)
+  // Default: fetch older (or initial)
   const filter = { ...baseFilter };
   if (cursor) {
     filter._id = { $lt: cursor };
@@ -164,7 +158,7 @@ export const getMessages = asyncHandler(async (req, res) => {
   const hasMoreOlder = messages.length > limit;
   if (hasMoreOlder) messages.pop();
 
-  messages.reverse(); // Standardize ascending order for chat UI
+  messages.reverse();
 
   return res.status(200).json({
     success: true,
@@ -173,56 +167,17 @@ export const getMessages = asyncHandler(async (req, res) => {
       olderCursor: messages.length > 0 ? messages[0]._id : null,
       hasMoreOlder,
       newerCursor: messages.length > 0 && !cursor ? messages[messages.length - 1]._id : null,
-      hasMoreNewer: false, // Initial fetch is at bottom, so no newer messages
+      hasMoreNewer: false,
       limit,
     },
   });
 });
 
-// @route   PUT /api/message/read/:id
-// @desc    Mark all messages from a user as read
-// @access  Private
-export const markMessagesAsRead = asyncHandler(async (req, res) => {
-  const { id: userId } = req.params; // sender id (person we're reading messages FROM)
-  const myId = req.user._id; // receiver id (me, the person marking as read)
-
-  // Mark messages as read
-  await Message.updateMany(
-    { senderId: userId, receiverId: myId, read: false },
-    { read: true }
-  );
-
-  // Update the SENDER's view (User B sees their messages are now read)
-  const senderSocketId = getReceiverSocketId(userId);
-  if (senderSocketId) {
-    const senderUsersWithLastMessage = await getUsersWithLastMessage(userId);
-    io.to(senderSocketId).emit("updatedUsers", senderUsersWithLastMessage);
-    
-    // Emit event to let the sender know their messages were read
-    io.to(senderSocketId).emit("messagesRead", {
-      receiverId: myId,
-    });
-  }
-
-  // Update the CURRENT USER's view (User A sees updated unread counts)
-  const mySocketId = getReceiverSocketId(myId);
-  if (mySocketId) {
-    const myUsersWithLastMessage = await getUsersWithLastMessage(myId);
-    io.to(mySocketId).emit("updatedUsers", myUsersWithLastMessage);
-  }
-
-  res.status(200).json({
-    success: true,
-    message: "Messages marked as read",
-  });
-});
-
-// @route   GET /api/message/search/:id
-// @desc    Search user messages
+// @route   GET /api/message/search/:conversationId
+// @desc    Search messages in a conversation
 // @access  Private
 export const searchMessages = asyncHandler(async (req, res) => {
-  const { id: userToChatId } = req.params;
-  const myId = req.user._id;
+  const { conversationId } = req.params;
   const { q } = req.query;
 
   if (!q) {
@@ -230,10 +185,7 @@ export const searchMessages = asyncHandler(async (req, res) => {
   }
 
   const messages = await Message.find({
-    $or: [
-      { senderId: myId, receiverId: userToChatId },
-      { senderId: userToChatId, receiverId: myId },
-    ],
+    conversationId,
     $text: { $search: q },
   })
     .sort({ createdAt: -1 })

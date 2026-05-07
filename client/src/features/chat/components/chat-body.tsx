@@ -8,10 +8,9 @@ import {
 } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Image, X, Loader2, Circle, Smile, Search } from "lucide-react";
+import { Send, Image, X, Loader2, Circle, Smile, Search, Users } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { toast } from "sonner";
 import {
@@ -25,7 +24,7 @@ import { messageSlice } from "@/store/slices";
 import moment from "moment";
 import { cn } from "@/lib/utils";
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
-import type { Message } from "@/types";
+import type { Message, User } from "@/types";
 import { useChatSocket, useTypingIndicator, useInfiniteScroll } from "../hooks";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,7 +35,6 @@ type Props = {
 };
 
 export default function Chat({ mobileView }: Props) {
-  // hooks
   const dispatch = useAppDispatch();
 
   // states
@@ -46,8 +44,11 @@ export default function Chat({ mobileView }: Props) {
   const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>(
     null,
   );
-  const { selectedUser, onlineUsers } = useAppSelector((state) => state.user);
-  const { messages, hasMoreOlder, hasMoreNewer, olderCursor, newerCursor } = useAppSelector((state) => state.message);
+  const { selectedConversation, onlineUsers } = useAppSelector(
+    (state) => state.conversation,
+  );
+  const { messages, hasMoreOlder, hasMoreNewer, olderCursor, newerCursor } =
+    useAppSelector((state) => state.message);
   const { userInfo } = useAppSelector((state) => state.auth);
 
   const [paginationQuery, setPaginationQuery] = useState<{
@@ -59,7 +60,8 @@ export default function Chat({ mobileView }: Props) {
   // Search states
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchMessages, { data: searchResults, isFetching: isSearching }] = useLazySearchMessagesQuery();
+  const [searchMessages, { data: searchResults, isFetching: isSearching }] =
+    useLazySearchMessagesQuery();
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
     setText((prev) => prev + emojiData.emoji);
@@ -67,8 +69,11 @@ export default function Chat({ mobileView }: Props) {
 
   // api
   const [sendMessage, { isLoading }] = useSendMessageMutation();
-  const userId = selectedUser?._id ?? skipToken;
-  const queryArgs = userId === skipToken ? skipToken : { userId, ...paginationQuery };
+  const conversationId = selectedConversation?._id ?? skipToken;
+  const queryArgs =
+    conversationId === skipToken
+      ? skipToken
+      : { conversationId, ...paginationQuery };
   const { data, refetch, isFetching } = useGetMessagesQuery(queryArgs, {
     refetchOnMountOrArgChange: true,
   });
@@ -80,20 +85,26 @@ export default function Chat({ mobileView }: Props) {
       return;
     }
     const delayDebounceFn = setTimeout(() => {
-      if (searchQuery.trim() && selectedUser?._id) {
-        searchMessages({ userId: selectedUser._id, q: searchQuery });
+      if (searchQuery.trim() && selectedConversation?._id) {
+        searchMessages({
+          conversationId: selectedConversation._id,
+          q: searchQuery,
+        });
       }
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, showSearch, selectedUser?._id, searchMessages]);
+  }, [searchQuery, showSearch, selectedConversation?._id, searchMessages]);
 
   const handleJumpToMessage = (messageId: string) => {
     const el = document.getElementById(`msg-${messageId}`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       el.classList.add("bg-blue-100", "dark:bg-blue-900/40");
-      setTimeout(() => el.classList.remove("bg-blue-100", "dark:bg-blue-900/40"), 2000);
+      setTimeout(
+        () => el.classList.remove("bg-blue-100", "dark:bg-blue-900/40"),
+        2000,
+      );
       setShowSearch(false);
     } else {
       setPaginationQuery({ around: messageId });
@@ -102,12 +113,19 @@ export default function Chat({ mobileView }: Props) {
   };
 
   useEffect(() => {
-    if (paginationQuery?.around && !isFetching && messages.find((m) => m._id === paginationQuery.around)) {
+    if (
+      paginationQuery?.around &&
+      !isFetching &&
+      messages.find((m) => m._id === paginationQuery.around)
+    ) {
       const el = document.getElementById(`msg-${paginationQuery.around}`);
       if (el) {
         el.scrollIntoView({ block: "center" });
         el.classList.add("bg-blue-100", "dark:bg-blue-900/40");
-        setTimeout(() => el.classList.remove("bg-blue-100", "dark:bg-blue-900/40"), 2000);
+        setTimeout(
+          () => el.classList.remove("bg-blue-100", "dark:bg-blue-900/40"),
+          2000,
+        );
       }
     }
   }, [paginationQuery?.around, isFetching, messages]);
@@ -140,27 +158,25 @@ export default function Chat({ mobileView }: Props) {
     setNewMessage(message);
   }, []);
 
-  const { markAsRead } = useChatSocket({
-    selectedUserId: selectedUser?._id,
+  useChatSocket({
+    selectedConversationId: selectedConversation?._id,
     onNewMessage: handleNewMessage,
     refetch,
   });
 
-  const isTyping = useTypingIndicator({
+  const { isTyping, typerNames } = useTypingIndicator({
     currentUserId: userInfo?.id,
-    selectedUserId: selectedUser?._id,
+    conversationId: selectedConversation?._id,
     text,
   });
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  // scroll to bottom
   const msgEndRef = useRef<null | HTMLDivElement>(null);
   const scrollToBottom = () => {
     msgEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    // Only auto-scroll to bottom on initial load or if we haven't scrolled up
     if (!paginationQuery) {
       setTimeout(() => {
         scrollToBottom();
@@ -168,45 +184,45 @@ export default function Chat({ mobileView }: Props) {
     }
   }, [data, isTyping, paginationQuery]);
 
-  // Mark messages as read when chat is opened with unread messages
-  useEffect(() => {
-    if (selectedUser && data?.data && data.data.length > 0) {
-      const hasUnreadMessages = data.data.some(
-        (message) => message.senderId === selectedUser._id && !message.read,
-      );
-
-      if (hasUnreadMessages) {
-        markAsRead();
-      }
-    }
-  }, [selectedUser?._id, data, markAsRead]);
-
   // Add new message to local state
   useEffect(() => {
-    const isMessageSentFromSelectedUser = newMessage?.senderId === userId;
-    if (isMessageSentFromSelectedUser && newMessage) {
+    const msgConversationId =
+      typeof newMessage?.conversationId === "string"
+        ? newMessage.conversationId
+        : "";
+    const isForThisConversation =
+      msgConversationId === selectedConversation?._id;
+    if (isForThisConversation && newMessage) {
       if (!hasMoreNewer) {
-        dispatch(messageSlice.actions.setMessage(newMessage));
+        // Avoid duplicating if it's our own message (already added optimistically)
+        const senderId =
+          typeof newMessage.senderId === "string"
+            ? newMessage.senderId
+            : newMessage.senderId._id;
+        if (senderId !== userInfo?.id) {
+          dispatch(messageSlice.actions.setMessage(newMessage));
+        }
         setTimeout(() => scrollToBottom(), 100);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newMessage, hasMoreNewer]);
 
-  // Reset form when switching users
+  // Reset form when switching conversations
   useEffect(() => {
     setText("");
     setImagePreview(null);
     setPaginationQuery(null);
     setShowPicker(false);
+    setShowSearch(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
-  }, [selectedUser?._id]);
+  }, [selectedConversation?._id]);
 
   const compressImage = async (file: File) => {
     const options = {
-      maxSizeMB: 1, // Max size (in MB) after compression
-      maxWidthOrHeight: 1024, // Max width or height
-      useWebWorker: true, // Use web workers for faster compression
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1024,
+      useWebWorker: true,
     };
 
     try {
@@ -214,7 +230,7 @@ export default function Chat({ mobileView }: Props) {
       return compressedFile;
     } catch (error) {
       console.error("Compression failed:", error);
-      return file; // fallback to original file
+      return file;
     }
   };
 
@@ -249,7 +265,7 @@ export default function Chat({ mobileView }: Props) {
     if (!text.trim() && !imagePreview) return;
 
     const res = await sendMessage({
-      receiverId: selectedUser?._id as string,
+      conversationId: selectedConversation?._id as string,
       text,
       image: imagePreview as string,
     }).unwrap();
@@ -262,7 +278,50 @@ export default function Chat({ mobileView }: Props) {
     }
   };
 
-  const userOnline = onlineUsers.includes(selectedUser?._id as string);
+  // Helper: get the "other user" for DMs
+  const otherUser =
+    selectedConversation?.type === "dm"
+      ? selectedConversation.members.find((m) => m._id !== userInfo?.id)
+      : null;
+
+  const isConversationOnline =
+    selectedConversation?.type === "dm" && otherUser
+      ? onlineUsers.includes(otherUser._id)
+      : false;
+
+  // Helper: get sender display info from a message
+  const getSenderInfo = (
+    senderId: Message["senderId"],
+  ): { name: string; profilePic?: string; id: string } => {
+    if (typeof senderId === "object" && senderId !== null) {
+      return {
+        name: senderId.name,
+        profilePic: senderId.profilePic,
+        id: senderId._id,
+      };
+    }
+    // Fallback: find in conversation members
+    const member = selectedConversation?.members.find(
+      (m) => m._id === senderId,
+    );
+    return {
+      name: member?.name || "Unknown",
+      profilePic: member?.profilePic,
+      id: senderId,
+    };
+  };
+
+  // Header display name
+  const headerName =
+    selectedConversation?.type === "group"
+      ? selectedConversation.name || "Group"
+      : otherUser?.name || "";
+
+  // Header avatar
+  const headerAvatar =
+    selectedConversation?.type === "group"
+      ? selectedConversation.avatar || undefined
+      : otherUser?.profilePic;
 
   return (
     <Card
@@ -274,39 +333,53 @@ export default function Chat({ mobileView }: Props) {
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="relative">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={selectedUser?.profilePic} />
-              <AvatarFallback>
-                <UserIcon className="h-6 w-6 text-muted-foreground" />
-              </AvatarFallback>
-            </Avatar>
-            <p className="absolute bottom-[1px] right-1 text-xs text-gray-500">
-              {userOnline ? (
-                <Circle fill="green" size={12} strokeWidth={0} />
-              ) : (
-                <Circle
-                  className="rounded-full bg-red-600"
-                  size={10}
-                  strokeWidth={0}
-                />
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={headerAvatar} />
+                <AvatarFallback>
+                  {selectedConversation?.type === "group" ? (
+                    <Users className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <UserIcon className="h-6 w-6 text-muted-foreground" />
+                  )}
+                </AvatarFallback>
+              </Avatar>
+              {selectedConversation?.type === "dm" && (
+                <p className="absolute bottom-[1px] right-1 text-xs text-gray-500">
+                  {isConversationOnline ? (
+                    <Circle fill="green" size={12} strokeWidth={0} />
+                  ) : (
+                    <Circle
+                      className="rounded-full bg-red-600"
+                      size={10}
+                      strokeWidth={0}
+                    />
+                  )}
+                </p>
               )}
-            </p>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold leading-tight text-gray-900 dark:text-[#E1E1E1]">
+                {headerName}
+              </h2>
+              <p
+                className={cn(
+                  "text-sm font-normal",
+                  selectedConversation?.type === "group"
+                    ? "text-gray-500"
+                    : isConversationOnline
+                      ? "text-green-500"
+                      : "text-red-600",
+                )}
+              >
+                {selectedConversation?.type === "group"
+                  ? `${selectedConversation.members.length} members`
+                  : isConversationOnline
+                    ? "Online"
+                    : "Offline"}
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold leading-tight text-gray-900 dark:text-[#E1E1E1]">
-              {selectedUser?.name}
-            </h2>
-            <p
-              className={cn(
-                "text-sm font-normal",
-                userOnline ? "text-green-500" : "text-red-600",
-              )}
-            >
-              {userOnline ? "Online" : "Offline"}
-            </p>
-          </div>
-          </div>
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -329,7 +402,9 @@ export default function Chat({ mobileView }: Props) {
             {searchQuery && (
               <div className="absolute left-0 right-0 top-[100%] max-h-64 overflow-y-auto border bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
                 {isSearching ? (
-                  <div className="p-4 text-center text-sm text-gray-500">Searching...</div>
+                  <div className="p-4 text-center text-sm text-gray-500">
+                    Searching...
+                  </div>
                 ) : searchResults?.data && searchResults.data.length > 0 ? (
                   searchResults.data.map((msg) => (
                     <div
@@ -337,14 +412,18 @@ export default function Chat({ mobileView }: Props) {
                       className="cursor-pointer border-b p-3 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
                       onClick={() => handleJumpToMessage(msg._id)}
                     >
-                      <p className="line-clamp-2 text-sm text-gray-800 dark:text-gray-200">{msg.text}</p>
+                      <p className="line-clamp-2 text-sm text-gray-800 dark:text-gray-200">
+                        {msg.text}
+                      </p>
                       <p className="mt-1 text-xs text-gray-500">
                         {moment(msg.createdAt).format("MMM D, YYYY h:mm A")}
                       </p>
                     </div>
                   ))
                 ) : (
-                  <div className="p-4 text-center text-sm text-gray-500">No messages found</div>
+                  <div className="p-4 text-center text-sm text-gray-500">
+                    No messages found
+                  </div>
                 )}
               </div>
             )}
@@ -379,57 +458,78 @@ export default function Chat({ mobileView }: Props) {
                 Beginning of conversation
               </p>
             )}
-            {messages.map((message) => (
-              <div
-                key={message._id}
-                id={`msg-${message._id}`}
-                className={cn(
-                  "flex rounded-lg transition-colors duration-500",
-                  message.senderId === userInfo?.id
-                    ? "justify-end"
-                    : "justify-start",
-                )}
-              >
+            {messages.map((message) => {
+              const senderIdStr =
+                typeof message.senderId === "string"
+                  ? message.senderId
+                  : message.senderId._id;
+              const isMe = senderIdStr === userInfo?.id;
+              const sender = getSenderInfo(message.senderId);
+              const isGroup = selectedConversation?.type === "group";
+
+              return (
                 <div
-                  className={`max-w-[70%] rounded-lg p-3 ${
-                    message.senderId === userInfo?.id
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
-                  }`}
-                >
-                  {message.image && (
-                    <img
-                      src={message.image || "/placeholder.svg"}
-                      alt="Shared"
-                      className="mb-2 max-w-sm rounded-lg"
-                    />
+                  key={message._id}
+                  id={`msg-${message._id}`}
+                  className={cn(
+                    "flex rounded-lg transition-colors duration-500",
+                    isMe ? "justify-end" : "justify-start",
                   )}
-                  <p className="text-[1rem]">{message.text}</p>
-                  <p
-                    className={cn(
-                      "mt-1 text-xs",
-                      message.senderId === userInfo?.id
-                        ? "text-gray-200"
-                        : "text-gray-600 dark:text-gray-400",
-                    )}
+                >
+                  {/* Group chat: show sender avatar on left */}
+                  {isGroup && !isMe && (
+                    <div className="mr-2 mt-1 flex-shrink-0">
+                      <Avatar className="h-7 w-7">
+                        <AvatarImage src={sender.profilePic} />
+                        <AvatarFallback>
+                          <UserIcon className="h-4 w-4 text-muted-foreground" />
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  )}
+                  <div
+                    className={`max-w-[70%] rounded-lg p-3 ${
+                      isMe
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
+                    }`}
                   >
-                    {moment(message.createdAt).fromNow()}
-                    {message.senderId === userInfo?.id && (
-                      <span className="ml-2 inline-block">
-                        {message.read ? (
-                          <span className="text-blue-200">✓✓</span>
-                        ) : (
-                          <span className="text-gray-400">✓</span>
-                        )}
-                      </span>
+                    {/* Group chat: show sender name */}
+                    {isGroup && !isMe && (
+                      <p className="mb-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                        {sender.name}
+                      </p>
                     )}
-                  </p>
+                    {message.image && (
+                      <img
+                        src={message.image || "/placeholder.svg"}
+                        alt="Shared"
+                        className="mb-2 max-w-sm rounded-lg"
+                      />
+                    )}
+                    <p className="text-[1rem]">{message.text}</p>
+                    <p
+                      className={cn(
+                        "mt-1 text-xs",
+                        isMe
+                          ? "text-gray-200"
+                          : "text-gray-600 dark:text-gray-400",
+                      )}
+                    >
+                      {moment(message.createdAt).fromNow()}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {isTyping ? (
               <div className="flex justify-start">
                 <div className="w-fit rounded-lg bg-gray-200 p-3 dark:bg-gray-800 dark:text-gray-300">
+                  <p className="mb-1 text-xs text-gray-500">
+                    {selectedConversation?.type === "group"
+                      ? `${typerNames.join(", ")} ${typerNames.length > 1 ? "are" : "is"} typing`
+                      : "Typing"}
+                  </p>
                   <div className="typing-dots">
                     <span className="typing-dot"></span>
                     <span className="typing-dot"></span>

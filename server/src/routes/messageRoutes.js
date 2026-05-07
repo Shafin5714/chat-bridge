@@ -1,19 +1,15 @@
 import { Router } from "express";
 import {
-  getUsers,
   sendMessage,
   getMessages,
-  markMessagesAsRead,
   searchMessages,
 } from "../controllers/messageController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
-router.route("/users").get(protect, getUsers);
-router.route("/send/:id").post(protect, sendMessage);
-router.route("/search/:id").get(protect, searchMessages);
-router.route("/:id").get(protect, getMessages);
-router.route("/read/:id").put(protect, markMessagesAsRead);
+router.route("/send/:conversationId").post(protect, sendMessage);
+router.route("/search/:conversationId").get(protect, searchMessages);
+router.route("/:conversationId").get(protect, getMessages);
 
 export default router;
