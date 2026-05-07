@@ -2,7 +2,7 @@
  * Migration Script: Convert old 1:1 messages (senderId/receiverId) to
  * the new Conversation-based model (conversationId).
  *
- * Usage: node --experimental-modules src/scripts/migrate-to-conversations.js
+ * Usage: npx tsx src/scripts/migrate-to-conversations.ts
  *
  * This script:
  * 1. Reads all existing messages with senderId + receiverId fields
@@ -24,6 +24,10 @@ async function migrate() {
   console.log("Connected.");
 
   const db = mongoose.connection.db;
+  if (!db) {
+    throw new Error("No database connection");
+  }
+
   const messagesCollection = db.collection("messages");
   const conversationsCollection = db.collection("conversations");
 

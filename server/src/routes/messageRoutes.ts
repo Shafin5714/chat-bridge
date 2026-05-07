@@ -3,8 +3,8 @@ import {
   sendMessage,
   getMessages,
   searchMessages,
-} from "../controllers/messageController.js";
-import { protect } from "../middlewares/authMiddleware.js";
+} from "../controllers/messageController";
+import { protect } from "../middlewares/authMiddleware";
 
 const router = Router();
 

@@ -1,16 +1,19 @@
-import asyncHandler from "../middlewares/asyncHandler.js";
-import cloudinary from "../lib/cloudinary.js";
-import Message from "../models/messageModel.js";
-import Conversation from "../models/conversationModel.js";
-import { io } from "../lib/socket.js";
+import { Request, Response } from "express";
+import asyncHandler from "../middlewares/asyncHandler";
+import cloudinary from "../lib/cloudinary";
+import Message from "../models/messageModel";
+import Conversation from "../models/conversationModel";
+import { io } from "../lib/socket";
 
 // @route   POST /api/message/send/:conversationId
 // @desc    Send message to a conversation
 // @access  Private
-export const sendMessage = asyncHandler(async (req, res) => {
+export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
   const { text, image } = req.body;
   const { conversationId } = req.params;
-  const senderId = req.user._id;
+  const senderId = req.user?._id;
+
+  if (!senderId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
   // Verify conversation exists and user is a member
   const conversation = await Conversation.findById(conversationId);
@@ -43,7 +46,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
   await newMessage.save();
 
   // Update conversation's lastMessage and bump updatedAt
-  conversation.lastMessage = newMessage._id;
+  conversation.lastMessage = newMessage._id as any;
   await conversation.save();
 
   // Populate sender info for the emitted message
@@ -70,12 +73,14 @@ export const sendMessage = asyncHandler(async (req, res) => {
 // @route   GET /api/message/:conversationId
 // @desc    Get messages for a conversation
 // @access  Private
-export const getMessages = asyncHandler(async (req, res) => {
+export const getMessages = asyncHandler(async (req: Request, res: Response) => {
   const { conversationId } = req.params;
-  const myId = req.user._id;
+  const myId = req.user?._id;
   const { cursor, newerCursor, around, limit: rawLimit } = req.query;
 
-  const limit = Math.min(parseInt(rawLimit) || 30, 50);
+  if (!myId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+  const limit = Math.min(parseInt(rawLimit as string) || 30, 50);
 
   // Verify membership
   const conversation = await Conversation.findById(conversationId);
@@ -146,7 +151,7 @@ export const getMessages = asyncHandler(async (req, res) => {
   }
 
   // Default: fetch older (or initial)
-  const filter = { ...baseFilter };
+  const filter: any = { ...baseFilter };
   if (cursor) {
     filter._id = { $lt: cursor };
   }
@@ -176,7 +181,7 @@ export const getMessages = asyncHandler(async (req, res) => {
 // @route   GET /api/message/search/:conversationId
 // @desc    Search messages in a conversation
 // @access  Private
-export const searchMessages = asyncHandler(async (req, res) => {
+export const searchMessages = asyncHandler(async (req: Request, res: Response) => {
   const { conversationId } = req.params;
   const { q } = req.query;
 
@@ -186,7 +191,7 @@ export const searchMessages = asyncHandler(async (req, res) => {
 
   const messages = await Message.find({
     conversationId,
-    $text: { $search: q },
+    $text: { $search: q as string },
   })
     .sort({ createdAt: -1 })
     .limit(50);

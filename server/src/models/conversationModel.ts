@@ -1,6 +1,17 @@
-import mongoose from "mongoose";
+import mongoose, { Document, Model, Schema } from "mongoose";
 
-const conversationSchema = new mongoose.Schema(
+export interface IConversation extends Document {
+  type: "dm" | "group";
+  name?: string | null;
+  avatar?: string | null;
+  admin?: mongoose.Types.ObjectId | null;
+  members: mongoose.Types.ObjectId[];
+  lastMessage?: mongoose.Types.ObjectId | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const conversationSchema = new Schema<IConversation>(
   {
     type: {
       type: String,
@@ -40,6 +51,9 @@ conversationSchema.index({ members: 1 });
 conversationSchema.index({ type: 1 });
 conversationSchema.index({ updatedAt: -1 });
 
-const Conversation = mongoose.model("Conversation", conversationSchema);
+const Conversation: Model<IConversation> = mongoose.model<IConversation>(
+  "Conversation",
+  conversationSchema
+);
 
 export default Conversation;

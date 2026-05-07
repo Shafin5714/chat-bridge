@@ -1,14 +1,20 @@
-import asyncHandler from "../middlewares/asyncHandler.js";
-import User from "../models/userModel.js";
-import cloudinary from "../lib/cloudinary.js";
+import { Request, Response } from "express";
+import asyncHandler from "../middlewares/asyncHandler";
+import User from "../models/userModel";
+import cloudinary from "../lib/cloudinary";
 
 // @route   PUT /api/users/profile
 // @desc    Update user profile
 // @access  Private
 // @returns { success, message, data: { user:{id, name, email, profilePic} } }
-export const updateProfile = asyncHandler(async (req, res) => {
+export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
   const { name, profilePic } = req.body;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+
+  if (!userId) {
+    res.status(401);
+    throw new Error("Not authorized");
+  }
 
   const user = await User.findById(userId);
 
@@ -53,10 +59,8 @@ export const updateProfile = asyncHandler(async (req, res) => {
 // @route   GET /api/users
 // @desc    Get all users except the logged-in user
 // @access  Private
-export const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({ _id: { $ne: req.user._id } }).select(
-    "-password"
-  );
+export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
+  const users = await User.find({ _id: { $ne: req.user?._id } }).select("-password");
 
   res.status(200).json({
     success: true,

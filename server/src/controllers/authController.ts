@@ -1,12 +1,13 @@
-import asyncHandler from "../middlewares/asyncHandler.js";
-import generateToken from "../utils/generateToken.js";
-import User from "../models/userModel.js";
+import { Request, Response } from "express";
+import asyncHandler from "../middlewares/asyncHandler";
+import generateToken from "../utils/generateToken";
+import User, { IUser } from "../models/userModel";
 
 // @route   POST /api/auth/register
 // @desc    Register a new user and return token + user info
 // @access  Public
 // @returns { success, message, data: { user:{id, name, email} } }
-export const register = asyncHandler(async (req, res) => {
+export const register = asyncHandler(async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
 
   const userExists = await User.findOne({ email });
@@ -23,7 +24,7 @@ export const register = asyncHandler(async (req, res) => {
   });
 
   if (user) {
-    generateToken(res, user._id);
+    generateToken(res, (user as any)._id.toString());
     res.status(201).json({
       success: true,
       message: "Registration successful.",
@@ -44,13 +45,13 @@ export const register = asyncHandler(async (req, res) => {
 // @desc    Login user
 // @access  Public
 // @returns { success, message, data: { user:{id, name, email} } }
-export const login = asyncHandler(async (req, res) => {
+export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
 
   if (user && (await user.matchPassword(password))) {
-    generateToken(res, user._id);
+    generateToken(res, (user as any)._id.toString());
     res.json({
       success: true,
       message: "Login successful.",
@@ -71,7 +72,7 @@ export const login = asyncHandler(async (req, res) => {
 // @desc    Logout user / clear cookie
 // @access  Public
 // @returns {  message }
-export const logout = (req, res) => {
+export const logout = (req: Request, res: Response) => {
   res.cookie("jwt", "", {
     httpOnly: true,
     expires: new Date(0),

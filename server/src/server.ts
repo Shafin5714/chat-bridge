@@ -3,10 +3,10 @@ import dotenv from "dotenv";
 import "colors";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { notFound, errorHandler } from "./middlewares/errorMiddleware.js";
-import routes from "./routes/index.js";
-import { connectDB } from "./config/db.js";
-import { server, app } from "./lib/socket.js";
+import { notFound, errorHandler } from "./middlewares/errorMiddleware";
+import routes from "./routes/index";
+import { connectDB } from "./config/db";
+import { server, app } from "./lib/socket";
 import morgan from "morgan";
 
 dotenv.config();

@@ -7,8 +7,8 @@ import {
   addMembers,
   removeMember,
   leaveGroup,
-} from "../controllers/conversationController.js";
-import { protect } from "../middlewares/authMiddleware.js";
+} from "../controllers/conversationController";
+import { protect } from "../middlewares/authMiddleware";
 
 const router = Router();
 

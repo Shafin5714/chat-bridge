@@ -1,17 +1,18 @@
-import asyncHandler from "../middlewares/asyncHandler.js";
-import Conversation from "../models/conversationModel.js";
-import cloudinary from "../lib/cloudinary.js";
+import { Request, Response } from "express";
+import asyncHandler from "../middlewares/asyncHandler";
+import Conversation from "../models/conversationModel";
+import cloudinary from "../lib/cloudinary";
 import {
   getOrCreateDMConversation,
   isMember,
   isAdmin,
-} from "../services/conversationService.js";
+} from "../services/conversationService";
 
 // @route   GET /api/conversations
 // @desc    Get all conversations for the logged-in user
 // @access  Private
-export const getConversations = asyncHandler(async (req, res) => {
-  const myId = req.user._id;
+export const getConversations = asyncHandler(async (req: Request, res: Response) => {
+  const myId = req.user?._id;
 
   const conversations = await Conversation.find({ members: myId })
     .populate("members", "-password")
@@ -27,9 +28,11 @@ export const getConversations = asyncHandler(async (req, res) => {
 // @route   POST /api/conversations/dm
 // @desc    Get or create a DM conversation with another user
 // @access  Private
-export const getOrCreateDM = asyncHandler(async (req, res) => {
-  const myId = req.user._id;
+export const getOrCreateDM = asyncHandler(async (req: Request, res: Response) => {
+  const myId = req.user?._id;
   const { userId } = req.body;
+
+  if (!myId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
   if (!userId) {
     return res
@@ -43,7 +46,7 @@ export const getOrCreateDM = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Cannot create DM with yourself" });
   }
 
-  const conversation = await getOrCreateDMConversation(myId, userId);
+  const conversation = await getOrCreateDMConversation(myId.toString(), userId);
   const populated = await conversation.populate("members", "-password");
 
   res.status(200).json({
@@ -55,9 +58,11 @@ export const getOrCreateDM = asyncHandler(async (req, res) => {
 // @route   POST /api/conversations/group
 // @desc    Create a new group conversation
 // @access  Private
-export const createGroup = asyncHandler(async (req, res) => {
-  const myId = req.user._id;
+export const createGroup = asyncHandler(async (req: Request, res: Response) => {
+  const myId = req.user?._id;
   const { name, memberIds, avatar } = req.body;
+
+  if (!myId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
   if (!name || !name.trim()) {
     return res
@@ -86,7 +91,7 @@ export const createGroup = asyncHandler(async (req, res) => {
   }
 
   // Ensure creator is included in members
-  const allMembers = [myId, ...memberIds.filter((id) => id !== myId.toString())];
+  const allMembers = [myId.toString(), ...memberIds.filter((id: string) => id !== myId.toString())];
 
   const conversation = await Conversation.create({
     type: "group",
@@ -107,10 +112,12 @@ export const createGroup = asyncHandler(async (req, res) => {
 // @route   PUT /api/conversations/group/:id
 // @desc    Update group name/avatar (admin only)
 // @access  Private
-export const updateGroup = asyncHandler(async (req, res) => {
-  const myId = req.user._id;
+export const updateGroup = asyncHandler(async (req: Request, res: Response) => {
+  const myId = req.user?._id;
   const { id } = req.params;
   const { name, avatar } = req.body;
+
+  if (!myId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
   const conversation = await Conversation.findById(id);
   if (!conversation || conversation.type !== "group") {
@@ -119,7 +126,7 @@ export const updateGroup = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Group not found" });
   }
 
-  if (!isAdmin(conversation, myId)) {
+  if (!isAdmin(conversation, myId.toString())) {
     return res
       .status(403)
       .json({ success: false, message: "Only the admin can update the group" });
@@ -146,10 +153,12 @@ export const updateGroup = asyncHandler(async (req, res) => {
 // @route   PUT /api/conversations/group/:id/members
 // @desc    Add members to group (admin only)
 // @access  Private
-export const addMembers = asyncHandler(async (req, res) => {
-  const myId = req.user._id;
+export const addMembers = asyncHandler(async (req: Request, res: Response) => {
+  const myId = req.user?._id;
   const { id } = req.params;
   const { memberIds } = req.body;
+
+  if (!myId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
   const conversation = await Conversation.findById(id);
   if (!conversation || conversation.type !== "group") {
@@ -158,14 +167,14 @@ export const addMembers = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Group not found" });
   }
 
-  if (!isAdmin(conversation, myId)) {
+  if (!isAdmin(conversation, myId.toString())) {
     return res
       .status(403)
       .json({ success: false, message: "Only the admin can add members" });
   }
 
   const currentMembers = conversation.members.map((m) => m.toString());
-  const newMembers = memberIds.filter((id) => !currentMembers.includes(id));
+  const newMembers = memberIds.filter((id: string) => !currentMembers.includes(id));
 
   if (currentMembers.length + newMembers.length > 50) {
     return res
@@ -186,9 +195,11 @@ export const addMembers = asyncHandler(async (req, res) => {
 // @route   DELETE /api/conversations/group/:id/members/:userId
 // @desc    Remove a member from group (admin only)
 // @access  Private
-export const removeMember = asyncHandler(async (req, res) => {
-  const myId = req.user._id;
+export const removeMember = asyncHandler(async (req: Request, res: Response) => {
+  const myId = req.user?._id;
   const { id, userId } = req.params;
+
+  if (!myId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
   const conversation = await Conversation.findById(id);
   if (!conversation || conversation.type !== "group") {
@@ -197,7 +208,7 @@ export const removeMember = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Group not found" });
   }
 
-  if (!isAdmin(conversation, myId)) {
+  if (!isAdmin(conversation, myId.toString())) {
     return res
       .status(403)
       .json({ success: false, message: "Only the admin can remove members" });
@@ -211,7 +222,7 @@ export const removeMember = asyncHandler(async (req, res) => {
 
   conversation.members = conversation.members.filter(
     (m) => m.toString() !== userId
-  );
+  ) as any;
   await conversation.save();
   const populated = await conversation.populate("members", "-password");
 
@@ -224,9 +235,11 @@ export const removeMember = asyncHandler(async (req, res) => {
 // @route   POST /api/conversations/group/:id/leave
 // @desc    Leave a group conversation
 // @access  Private
-export const leaveGroup = asyncHandler(async (req, res) => {
-  const myId = req.user._id;
+export const leaveGroup = asyncHandler(async (req: Request, res: Response) => {
+  const myId = req.user?._id;
   const { id } = req.params;
+
+  if (!myId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
   const conversation = await Conversation.findById(id);
   if (!conversation || conversation.type !== "group") {
@@ -235,7 +248,7 @@ export const leaveGroup = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Group not found" });
   }
 
-  if (!isMember(conversation, myId)) {
+  if (!isMember(conversation, myId.toString())) {
     return res
       .status(400)
       .json({ success: false, message: "You are not a member of this group" });
@@ -243,10 +256,10 @@ export const leaveGroup = asyncHandler(async (req, res) => {
 
   conversation.members = conversation.members.filter(
     (m) => m.toString() !== myId.toString()
-  );
+  ) as any;
 
   // If admin leaves, transfer to the first remaining member
-  if (isAdmin(conversation, myId) && conversation.members.length > 0) {
+  if (isAdmin(conversation, myId.toString()) && conversation.members.length > 0) {
     conversation.admin = conversation.members[0];
   }
 

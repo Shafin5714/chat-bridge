@@ -1,9 +1,9 @@
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import http from "http";
 import express from "express";
 import jwt from "jsonwebtoken";
-import logger from "../utils/logger.js";
-import Conversation from "../models/conversationModel.js";
+import logger from "../utils/logger";
+import Conversation from "../models/conversationModel";
 
 const app = express();
 const server = http.createServer(app);
@@ -16,14 +16,18 @@ const io = new Server(server, {
   },
 });
 
-export const getReceiverSocketId = (userId) => {
+export const getReceiverSocketId = (userId: string): string | undefined => {
   return userSocketMap[userId];
 };
 
-const userSocketMap = {}; // {userId:socketId}
+const userSocketMap: { [key: string]: string } = {}; // {userId:socketId}
+
+interface CustomSocket extends Socket {
+  userId?: string;
+}
 
 // Socket Authentication Middleware
-io.use((socket, next) => {
+io.use((socket: CustomSocket, next) => {
   try {
     const cookieHeader = socket.handshake.headers.cookie;
     if (!cookieHeader) {
@@ -37,16 +41,16 @@ io.use((socket, next) => {
       return next(new Error("Authentication error: No token"));
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
     socket.userId = decoded.userId;
     next();
-  } catch (err) {
+  } catch (err: any) {
     logger.error("Socket authentication failed:", err.message);
     next(new Error("Authentication error"));
   }
 });
 
-io.on("connection", async (socket) => {
+io.on("connection", async (socket: CustomSocket) => {
   logger.debug("User connected:", socket.id);
 
   const userId = socket.userId;
@@ -54,11 +58,11 @@ io.on("connection", async (socket) => {
 
   // Join all conversation rooms the user belongs to
   try {
-    const conversations = await Conversation.find({ members: userId }).select(
-      "_id"
-    );
-    conversations.forEach((c) => socket.join(c._id.toString()));
-    logger.debug(`User ${userId} joined ${conversations.length} conversation rooms`);
+    const conversations = await Conversation.find({ members: userId }).select("_id");
+    conversations.forEach((c: any) => socket.join(c._id.toString()));
+    if (userId) {
+      logger.debug(`User ${userId} joined ${conversations.length} conversation rooms`);
+    }
   } catch (err) {
     logger.debug("Error joining conversation rooms:", err);
   }
@@ -67,13 +71,13 @@ io.on("connection", async (socket) => {
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   // Join a new conversation room (when added to group or DM created)
-  socket.on("joinConversation", (conversationId) => {
+  socket.on("joinConversation", (conversationId: string) => {
     socket.join(conversationId);
     logger.debug(`User ${userId} joined room ${conversationId}`);
   });
 
   // Typing message — broadcast to conversation room
-  socket.on("typingMessage", (data) => {
+  socket.on("typingMessage", (data: { senderId: string; conversationId: string; isTyping: boolean }) => {
     socket.to(data.conversationId).emit("typingMessageGet", {
       senderId: data.senderId,
       conversationId: data.conversationId,
@@ -83,7 +87,9 @@ io.on("connection", async (socket) => {
 
   socket.on("disconnect", () => {
     logger.debug("User disconnected:", socket.id);
-    delete userSocketMap[userId];
+    if (userId) {
+      delete userSocketMap[userId];
+    }
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
