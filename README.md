@@ -24,7 +24,9 @@
 <td width="50%">
 
 ### 💬 Real-Time Messaging
+
 - Instant message delivery via WebSockets
+- Cursor-based message pagination with infinite scroll
 - Text and image message support
 - Read receipts with live status sync
 - Live typing indicators
@@ -33,6 +35,7 @@
 <td width="50%">
 
 ### 👥 User Presence
+
 - Real-time online/offline status
 - Contact list with last message preview
 - Unread message count badges
@@ -44,6 +47,7 @@
 <td width="50%">
 
 ### 📸 Media Sharing
+
 - Image upload via Cloudinary CDN
 - Client-side image compression
 - Base64 encoding for seamless uploads
@@ -53,6 +57,7 @@
 <td width="50%">
 
 ### 🎨 Modern UI/UX
+
 - Dark / Light theme toggle
 - Fully responsive (mobile-first design)
 - Emoji picker integration
@@ -68,27 +73,27 @@
 
 ### Frontend
 
-| Technology | Purpose |
-|---|---|
-| **React 18** + **TypeScript** | UI framework with type safety |
-| **Vite 6** | Lightning-fast HMR and build tooling |
-| **Redux Toolkit** + **RTK Query** | Global state management and API caching |
-| **Tailwind CSS** | Utility-first styling |
-| **Radix UI** | Accessible, unstyled component primitives |
-| **Socket.IO Client** | Bi-directional real-time communication |
-| **React Hook Form** + **Zod** | Form handling with schema validation |
-| **Lucide React** | Icon library |
+| Technology                        | Purpose                                   |
+| --------------------------------- | ----------------------------------------- |
+| **React 18** + **TypeScript**     | UI framework with type safety             |
+| **Vite 6**                        | Lightning-fast HMR and build tooling      |
+| **Redux Toolkit** + **RTK Query** | Global state management and API caching   |
+| **Tailwind CSS**                  | Utility-first styling                     |
+| **Radix UI**                      | Accessible, unstyled component primitives |
+| **Socket.IO Client**              | Bi-directional real-time communication    |
+| **React Hook Form** + **Zod**     | Form handling with schema validation      |
+| **Lucide React**                  | Icon library                              |
 
 ### Backend
 
-| Technology | Purpose |
-|---|---|
-| **Node.js** + **Express** | REST API server |
-| **MongoDB** + **Mongoose** | NoSQL database with ODM |
-| **Socket.IO** | WebSocket server for real-time events |
-| **JWT** + **Cookies** | Stateless authentication with HTTP-only cookies |
-| **Cloudinary** | Cloud-based image storage and CDN |
-| **bcryptjs** | Secure password hashing |
+| Technology                 | Purpose                                         |
+| -------------------------- | ----------------------------------------------- |
+| **Node.js** + **Express**  | REST API server                                 |
+| **MongoDB** + **Mongoose** | NoSQL database with ODM                         |
+| **Socket.IO**              | WebSocket server for real-time events           |
+| **JWT** + **Cookies**      | Stateless authentication with HTTP-only cookies |
+| **Cloudinary**             | Cloud-based image storage and CDN               |
+| **bcryptjs**               | Secure password hashing                         |
 
 ---
 
@@ -136,14 +141,14 @@ chat-bridge/
 ### Real-Time Event Flow
 
 ```
-┌─────────────┐         WebSocket          ┌─────────────┐
+┌──────────────┐         WebSocket         ┌──────────────┐
 │   Client A   │ ◄═══════════════════════► │   Server     │
-│  (React +    │   • newMessage             │  (Express +  │
-│   Socket.IO) │   • typingMessage          │   Socket.IO) │
-│              │   • getOnlineUsers         │              │
-│              │   • updatedUsers           │              │
-│              │   • messagesRead           │              │
-└─────────────┘                            └──────┬───────┘
+│  (React +    │   • newMessage            │  (Express +  │
+│   Socket.IO) │   • typingMessage         │   Socket.IO) │
+│              │   • getOnlineUsers        │              │
+│              │   • updatedUsers          │              │
+│              │   • messagesRead          │              │
+└──────────────┘                           └──────┬───────┘
                                                   │
                                                   │ WebSocket
                                                   │
@@ -151,7 +156,7 @@ chat-bridge/
                                            │   Client B   │
                                            │  (React +    │
                                            │   Socket.IO) │
-                                           └─────────────┘
+                                           └──────────────┘
 ```
 
 ---
@@ -218,10 +223,10 @@ VITE_BACKEND_URL=http://localhost:5000
 npm run dev
 ```
 
-| Service  | URL                          |
-|----------|------------------------------|
-| Frontend | http://localhost:5173         |
-| Backend  | http://localhost:5000         |
+| Service  | URL                   |
+| -------- | --------------------- |
+| Frontend | http://localhost:5173 |
+| Backend  | http://localhost:5000 |
 
 > **Tip:** You can also start them separately — run `npm run dev` inside `server/` and `client/` in two terminals.
 
@@ -231,48 +236,48 @@ npm run dev
 
 ### Authentication
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/auth/register` | Register a new user |
-| `POST` | `/api/auth/login` | Login and receive JWT cookie |
-| `POST` | `/api/auth/logout` | Clear auth cookie |
+| Method | Endpoint             | Description                  |
+| ------ | -------------------- | ---------------------------- |
+| `POST` | `/api/auth/register` | Register a new user          |
+| `POST` | `/api/auth/login`    | Login and receive JWT cookie |
+| `POST` | `/api/auth/logout`   | Clear auth cookie            |
 
 ### Messages
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/message/users` | Get contacts with last message & unread count |
-| `GET` | `/api/message/:id` | Get conversation history with a user |
-| `POST` | `/api/message/send/:id` | Send a text or image message |
-| `PUT` | `/api/message/read/:id` | Mark messages from a user as read |
+| Method | Endpoint                | Description                                   |
+| ------ | ----------------------- | --------------------------------------------- |
+| `GET`  | `/api/message/users`    | Get contacts with last message & unread count |
+| `GET`  | `/api/message/:id`      | Get paginated conversation history            |
+| `POST` | `/api/message/send/:id` | Send a text or image message                  |
+| `PUT`  | `/api/message/read/:id` | Mark messages from a user as read             |
 
 ### Users
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `PUT` | `/api/users/profile` | Update profile (name, avatar) |
+| Method | Endpoint             | Description                   |
+| ------ | -------------------- | ----------------------------- |
+| `PUT`  | `/api/users/profile` | Update profile (name, avatar) |
 
 ### WebSocket Events
 
-| Event | Direction | Payload |
-|-------|-----------|---------|
-| `newMessage` | Server → Client | Message object |
-| `typingMessage` | Client → Server | `{ senderId, receiverId, isTyping }` |
+| Event              | Direction       | Payload                              |
+| ------------------ | --------------- | ------------------------------------ |
+| `newMessage`       | Server → Client | Message object                       |
+| `typingMessage`    | Client → Server | `{ senderId, receiverId, isTyping }` |
 | `typingMessageGet` | Server → Client | `{ senderId, receiverId, isTyping }` |
-| `getOnlineUsers` | Server → Client | `string[]` of user IDs |
-| `updatedUsers` | Server → Client | Updated user list with last messages |
-| `messagesRead` | Server → Client | `{ receiverId }` |
+| `getOnlineUsers`   | Server → Client | `string[]` of user IDs               |
+| `updatedUsers`     | Server → Client | Updated user list with last messages |
+| `messagesRead`     | Server → Client | `{ receiverId }`                     |
 
 ---
 
 ## 📜 Available Scripts
 
-| Script | Description |
-|--------|-------------|
+| Script                | Description                                     |
+| --------------------- | ----------------------------------------------- |
 | `npm run install:all` | Install dependencies for both client and server |
-| `npm run dev` | Start server and client concurrently |
-| `npm run build` | Build the client for production |
-| `npm run lint` | Run ESLint on the client code |
+| `npm run dev`         | Start server and client concurrently            |
+| `npm run build`       | Build the client for production                 |
+| `npm run lint`        | Run ESLint on the client code                   |
 
 ---
 

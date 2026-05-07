@@ -5,10 +5,14 @@ import type { Message } from "@/types";
 
 type MessageState = {
   messages: Message[];
+  hasMore: boolean;
+  nextCursor: string | null;
 };
 
 const initialState: MessageState = {
   messages: [],
+  hasMore: true,
+  nextCursor: null,
 };
 
 export const messageSlice = createSlice({
@@ -39,8 +43,15 @@ export const messageSlice = createSlice({
   extraReducers: (builder) => {
     builder.addMatcher(
       messageApi.endpoints.getMessages.matchFulfilled,
-      (state, { payload }) => {
-        state.messages = payload.data;
+      (state, { payload, meta }) => {
+        const isLoadMore = !!meta.arg.originalArgs.cursor;
+        if (isLoadMore) {
+          state.messages = [...payload.data, ...state.messages];
+        } else {
+          state.messages = payload.data;
+        }
+        state.hasMore = payload.pagination.hasMore;
+        state.nextCursor = payload.pagination.nextCursor;
       },
     );
     builder.addMatcher(authApi.endpoints.logout.matchFulfilled, () => initialState);

@@ -1,5 +1,5 @@
 import { emptySplitApi } from "./emptySplitApi";
-import type { Message, User } from "@/types";
+import type { Message, User, PaginatedMessagesResponse } from "@/types";
 
 export type UserResponse = {
   success: boolean;
@@ -39,11 +39,29 @@ export const messageApi = emptySplitApi.injectEndpoints({
         },
       }),
     }),
-    getMessages: builder.query<GetMessagesResponse, string>({
-      query: (id) => ({
-        url: `/message/${id}`,
-        providesTags: ["Message"],
+    getMessages: builder.query<
+      PaginatedMessagesResponse,
+      { userId: string; cursor?: string | null }
+    >({
+      query: ({ userId, cursor }) => ({
+        url: `/message/${userId}`,
+        params: { ...(cursor ? { cursor } : {}), limit: 30 },
       }),
+      providesTags: ["Message"],
+      serializeQueryArgs: ({ queryArgs }) => queryArgs.userId,
+      merge: (currentCache, newItems, { arg }) => {
+        if (!arg.cursor) {
+          return newItems;
+        }
+        return {
+          ...newItems,
+          data: [...newItems.data, ...currentCache.data],
+          pagination: newItems.pagination,
+        };
+      },
+      forceRefetch: ({ currentArg, previousArg }) => {
+        return currentArg !== previousArg;
+      },
     }),
     markMessagesAsRead: builder.mutation<void, string>({
       query: (id) => ({
@@ -53,7 +71,7 @@ export const messageApi = emptySplitApi.injectEndpoints({
       onQueryStarted: (id, { dispatch }) => {
         // Update the cache optimistically
         dispatch(
-          messageApi.util.updateQueryData("getMessages", id, (draft) => {
+          messageApi.util.updateQueryData("getMessages", { userId: id }, (draft) => {
             // Mark all messages from this user as read
             draft.data.forEach((message) => {
               if (message.senderId === id) {

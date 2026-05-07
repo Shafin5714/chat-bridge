@@ -42,3 +42,15 @@ export type TypingData = {
   receiverId: string;
   isTyping: boolean;
 };
+
+export type PaginationInfo = {
+  nextCursor: string | null;
+  hasMore: boolean;
+  limit: number;
+};
+
+export type PaginatedMessagesResponse = {
+  success: boolean;
+  data: Message[];
+  pagination: PaginationInfo;
+};

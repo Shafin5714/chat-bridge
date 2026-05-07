@@ -79,22 +79,45 @@ export const sendMessage = asyncHandler(async (req, res) => {
 // @route   GET /api/message/:id
 // @desc    Get user messages
 // @access  Private
-export const getMessages = async (req, res) => {
+export const getMessages = asyncHandler(async (req, res) => {
   const { id: userToChatId } = req.params;
   const myId = req.user._id;
+  const { cursor, limit: rawLimit } = req.query;
 
-  const messages = await Message.find({
+  const limit = Math.min(parseInt(rawLimit) || 30, 50);
+
+  const filter = {
     $or: [
       { senderId: myId, receiverId: userToChatId },
       { senderId: userToChatId, receiverId: myId },
     ],
-  }).sort({ createdAt: 1 });
+  };
+
+  if (cursor) {
+    filter._id = { $lt: cursor };
+  }
+
+  const messages = await Message.find(filter)
+    .sort({ createdAt: -1 })
+    .limit(limit + 1);
+
+  const hasMore = messages.length > limit;
+  if (hasMore) messages.pop();
+
+  messages.reverse();
+
+  const nextCursor = hasMore ? messages[0]._id : null;
 
   res.status(200).json({
     success: true,
     data: messages,
+    pagination: {
+      nextCursor,
+      hasMore,
+      limit,
+    },
   });
-};
+});
 
 // @route   PUT /api/message/read/:id
 // @desc    Mark all messages from a user as read

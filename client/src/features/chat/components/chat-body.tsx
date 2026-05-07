@@ -25,7 +25,7 @@ import moment from "moment";
 import { cn } from "@/lib/utils";
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 import type { Message } from "@/types";
-import { useChatSocket, useTypingIndicator } from "../hooks";
+import { useChatSocket, useTypingIndicator, useInfiniteScroll } from "../hooks";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User as UserIcon } from "lucide-react";
@@ -46,8 +46,10 @@ export default function Chat({ mobileView }: Props) {
     null,
   );
   const { selectedUser, onlineUsers } = useAppSelector((state) => state.user);
-  const { messages } = useAppSelector((state) => state.message);
+  const { messages, hasMore, nextCursor } = useAppSelector((state) => state.message);
   const { userInfo } = useAppSelector((state) => state.auth);
+
+  const [cursor, setCursor] = useState<string | null>(null);
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
     setText((prev) => prev + emojiData.emoji);
@@ -56,9 +58,25 @@ export default function Chat({ mobileView }: Props) {
   // api
   const [sendMessage, { isLoading }] = useSendMessageMutation();
   const userId = selectedUser?._id ?? skipToken;
-  const { data, refetch } = useGetMessagesQuery(userId, {
+  const queryArgs = userId === skipToken ? skipToken : { userId, cursor };
+  const { data, refetch, isFetching } = useGetMessagesQuery(queryArgs, {
     refetchOnMountOrArgChange: true,
   });
+
+  const { scrollRef, handleScroll, restoreScrollPosition } = useInfiniteScroll({
+    hasMore,
+    isLoading: isFetching,
+    onLoadMore: () => {
+      if (nextCursor) setCursor(nextCursor);
+    },
+  });
+
+  // Restore position after older messages load
+  useEffect(() => {
+    if (cursor && !isFetching) {
+      restoreScrollPosition();
+    }
+  }, [isFetching, cursor, restoreScrollPosition]);
 
   // Custom hooks for socket handling
   const handleNewMessage = useCallback((message: Message) => {
@@ -85,11 +103,13 @@ export default function Chat({ mobileView }: Props) {
   };
 
   useEffect(() => {
-    // delay for message to load properly for scroll
-    setTimeout(() => {
-      scrollToBottom();
-    }, 500);
-  }, [data, messages, isTyping]);
+    // Only auto-scroll to bottom on initial load or if we haven't scrolled up
+    if (!cursor) {
+      setTimeout(() => {
+        scrollToBottom();
+      }, 500);
+    }
+  }, [data, isTyping, cursor]);
 
   // Mark messages as read when chat is opened with unread messages
   useEffect(() => {
@@ -109,6 +129,7 @@ export default function Chat({ mobileView }: Props) {
     const isMessageSentFromSelectedUser = newMessage?.senderId === userId;
     if (isMessageSentFromSelectedUser && newMessage) {
       dispatch(messageSlice.actions.setMessage(newMessage));
+      setTimeout(() => scrollToBottom(), 100);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newMessage]);
@@ -117,6 +138,7 @@ export default function Chat({ mobileView }: Props) {
   useEffect(() => {
     setText("");
     setImagePreview(null);
+    setCursor(null);
     setShowPicker(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, [selectedUser?._id]);
@@ -177,6 +199,7 @@ export default function Chat({ mobileView }: Props) {
       handleRemove();
       setText("");
       dispatch(messageSlice.actions.setMessage(res.data));
+      setTimeout(() => scrollToBottom(), 100);
     }
   };
 
@@ -226,10 +249,22 @@ export default function Chat({ mobileView }: Props) {
       </CardHeader>
       <Separator className="dark:bg-gray-700" />
       <CardContent className="flex-1 overflow-hidden p-5 dark:bg-gray-900">
-        <ScrollArea
-          className={`h-[calc(100vh-22rem)] ${imagePreview ? "lg:h-[calc(100vh-18.5rem)]" : "lg:h-[calc(100vh-16rem)]"}`}
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className={`overflow-y-auto pr-3 h-[calc(100vh-22rem)] ${imagePreview ? "lg:h-[calc(100vh-18.5rem)]" : "lg:h-[calc(100vh-16rem)]"}`}
         >
-          <div className="flex flex-col justify-between gap-3">
+          <div className="flex flex-col justify-between gap-3 min-h-full">
+            {isFetching && cursor && (
+              <div className="flex justify-center py-2">
+                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+              </div>
+            )}
+            {!hasMore && messages.length > 0 && (
+              <p className="py-2 text-center text-xs text-gray-400">
+                Beginning of conversation
+              </p>
+            )}
             {messages.map((message) => (
               <div
                 key={message._id}
@@ -290,7 +325,7 @@ export default function Chat({ mobileView }: Props) {
             ) : null}
             <div ref={msgEndRef} />
           </div>
-        </ScrollArea>
+        </div>
       </CardContent>
       <Separator />
       <div className="px-3">
