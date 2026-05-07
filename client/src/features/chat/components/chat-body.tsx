@@ -362,7 +362,7 @@ export default function Chat({ mobileView }: Props) {
               placeholder="Type a message..."
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="h-10 flex-1 dark:bg-gray-900"
+              className="h-12 flex-1 dark:border-gray-800 dark:bg-gray-900"
             />
 
             <div className="relative">
@@ -374,7 +374,8 @@ export default function Chat({ mobileView }: Props) {
               <Button
                 type="button"
                 variant="outline"
-                className="h-10 w-10 px-0 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
+                size="icon"
+                className="h-12 w-12 shrink-0 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
                 onClick={() => setShowPicker((prev) => !prev)}
               >
                 <Smile className="h-5 w-5 text-gray-500" />
@@ -392,27 +393,27 @@ export default function Chat({ mobileView }: Props) {
 
               <Button
                 type="button"
-                className="h-10 w-14 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
+                variant="outline"
+                size="icon"
+                className="h-12 w-12 shrink-0 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   fileInputRef.current?.click();
                 }}
-                variant="outline"
               >
                 <Image className="h-5 w-5 text-gray-500" />
               </Button>
             </div>
             <Button
               type="submit"
-              size="icon"
               disabled={isLoading}
-              className="h-10 w-14"
+              className="h-12 w-16 shrink-0 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 shadow-md transition-all duration-300 hover:from-blue-600 hover:to-indigo-700 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95"
             >
               {isLoading ? (
-                <Loader2 className="animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <Send className="h-4 w-4" />
+                <Send className="h-5 w-5" />
               )}
             </Button>
           </form>
