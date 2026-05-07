@@ -7,10 +7,10 @@
 const isDev = process.env.NODE_ENV !== "production";
 
 export const logger = {
-  info: (...args: any[]) => isDev && console.log("[INFO]", ...args),
-  error: (...args: any[]) => console.error("[ERROR]", ...args),
-  debug: (...args: any[]) => isDev && console.log("[DEBUG]", ...args),
-  warn: (...args: any[]) => console.warn("[WARN]", ...args),
+  info: (...args: unknown[]) => isDev && console.log("[INFO]", ...args),
+  error: (...args: unknown[]) => console.error("[ERROR]", ...args),
+  debug: (...args: unknown[]) => isDev && console.log("[DEBUG]", ...args),
+  warn: (...args: unknown[]) => console.warn("[WARN]", ...args),
 };
 
 export default logger;

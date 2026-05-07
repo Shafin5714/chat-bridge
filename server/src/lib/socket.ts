@@ -1,6 +1,7 @@
 import { Server, Socket } from "socket.io";
 import http from "http";
 import express from "express";
+import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import logger from "../utils/logger";
 import Conversation from "../models/conversationModel";
@@ -44,8 +45,9 @@ io.use((socket: CustomSocket, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
     socket.userId = decoded.userId;
     next();
-  } catch (err: any) {
-    logger.error("Socket authentication failed:", err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    logger.error("Socket authentication failed:", message);
     next(new Error("Authentication error"));
   }
 });
@@ -58,8 +60,10 @@ io.on("connection", async (socket: CustomSocket) => {
 
   // Join all conversation rooms the user belongs to
   try {
-    const conversations = await Conversation.find({ members: userId }).select("_id");
-    conversations.forEach((c: any) => socket.join(c._id.toString()));
+    const conversations = await Conversation.find({ members: userId }).select("_id").lean<{ _id: mongoose.Types.ObjectId }[]>();
+    for (const c of conversations) {
+      socket.join(c._id.toString());
+    }
     if (userId) {
       logger.debug(`User ${userId} joined ${conversations.length} conversation rooms`);
     }

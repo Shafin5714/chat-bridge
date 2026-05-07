@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import asyncHandler from "../middlewares/asyncHandler";
 import generateToken from "../utils/generateToken";
 import User, { IUser } from "../models/userModel";
@@ -24,7 +25,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   });
 
   if (user) {
-    generateToken(res, (user as any)._id.toString());
+    generateToken(res, (user._id as mongoose.Types.ObjectId).toString());
     res.status(201).json({
       success: true,
       message: "Registration successful.",
@@ -51,7 +52,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const user = await User.findOne({ email });
 
   if (user && (await user.matchPassword(password))) {
-    generateToken(res, (user as any)._id.toString());
+    generateToken(res, (user._id as mongoose.Types.ObjectId).toString());
     res.json({
       success: true,
       message: "Login successful.",

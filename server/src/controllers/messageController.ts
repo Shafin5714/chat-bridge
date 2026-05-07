@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import mongoose, { FilterQuery } from "mongoose";
 import asyncHandler from "../middlewares/asyncHandler";
 import cloudinary from "../lib/cloudinary";
 import Message from "../models/messageModel";
@@ -46,7 +47,7 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
   await newMessage.save();
 
   // Update conversation's lastMessage and bump updatedAt
-  conversation.lastMessage = newMessage._id as any;
+  conversation.lastMessage = newMessage._id as mongoose.Types.ObjectId;
   await conversation.save();
 
   // Populate sender info for the emitted message
@@ -151,7 +152,7 @@ export const getMessages = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Default: fetch older (or initial)
-  const filter: any = { ...baseFilter };
+  const filter: FilterQuery<typeof Message> = { ...baseFilter };
   if (cursor) {
     filter._id = { $lt: cursor };
   }

@@ -18,8 +18,9 @@ const protect = asyncHandler(async (req: Request, res: Response, next: NextFunct
       req.user = (await User.findById(decoded.userId).select("-password")) as IUser;
 
       next();
-    } catch (error: any) {
-      logger.error("Auth token verification failed:", error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      logger.error("Auth token verification failed:", message);
       res.status(401);
       throw new Error("Not authorized, token failed");
     }

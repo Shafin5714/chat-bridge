@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import asyncHandler from "../middlewares/asyncHandler";
 import Conversation from "../models/conversationModel";
 import cloudinary from "../lib/cloudinary";
@@ -222,7 +223,7 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
 
   conversation.members = conversation.members.filter(
     (m) => m.toString() !== userId
-  ) as any;
+  ) as mongoose.Types.ObjectId[];
   await conversation.save();
   const populated = await conversation.populate("members", "-password");
 
@@ -256,7 +257,7 @@ export const leaveGroup = asyncHandler(async (req: Request, res: Response) => {
 
   conversation.members = conversation.members.filter(
     (m) => m.toString() !== myId.toString()
-  ) as any;
+  ) as mongoose.Types.ObjectId[];
 
   // If admin leaves, transfer to the first remaining member
   if (isAdmin(conversation, myId.toString()) && conversation.members.length > 0) {
