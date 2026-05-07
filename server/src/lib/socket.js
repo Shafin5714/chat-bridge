@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
+import jwt from "jsonwebtoken";
 import logger from "../utils/logger.js";
 import Conversation from "../models/conversationModel.js";
 
@@ -21,10 +22,34 @@ export const getReceiverSocketId = (userId) => {
 
 const userSocketMap = {}; // {userId:socketId}
 
+// Socket Authentication Middleware
+io.use((socket, next) => {
+  try {
+    const cookieHeader = socket.handshake.headers.cookie;
+    if (!cookieHeader) {
+      return next(new Error("Authentication error: No cookies"));
+    }
+
+    const tokenMatch = cookieHeader.match(/jwt=([^;]+)/);
+    const token = tokenMatch ? tokenMatch[1] : null;
+
+    if (!token) {
+      return next(new Error("Authentication error: No token"));
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.userId = decoded.userId;
+    next();
+  } catch (err) {
+    logger.error("Socket authentication failed:", err.message);
+    next(new Error("Authentication error"));
+  }
+});
+
 io.on("connection", async (socket) => {
   logger.debug("User connected:", socket.id);
 
-  const userId = socket.handshake.query.userId;
+  const userId = socket.userId;
   if (userId) userSocketMap[userId] = socket.id;
 
   // Join all conversation rooms the user belongs to

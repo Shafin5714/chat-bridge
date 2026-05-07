@@ -31,9 +31,6 @@ export const SocketProvider = ({ children }: Props) => {
   useEffect(() => {
     if (userInfo) {
       const newSocket = io(BACKEND_URL, {
-        query: {
-          userId: userInfo.id,
-        },
         withCredentials: true,
       });
       socketRef.current = newSocket;
