@@ -5,14 +5,18 @@ import type { Message } from "@/types";
 
 type MessageState = {
   messages: Message[];
-  hasMore: boolean;
-  nextCursor: string | null;
+  hasMoreOlder: boolean;
+  hasMoreNewer: boolean;
+  olderCursor: string | null;
+  newerCursor: string | null;
 };
 
 const initialState: MessageState = {
   messages: [],
-  hasMore: true,
-  nextCursor: null,
+  hasMoreOlder: true,
+  hasMoreNewer: false,
+  olderCursor: null,
+  newerCursor: null,
 };
 
 export const messageSlice = createSlice({
@@ -44,14 +48,26 @@ export const messageSlice = createSlice({
     builder.addMatcher(
       messageApi.endpoints.getMessages.matchFulfilled,
       (state, { payload, meta }) => {
-        const isLoadMore = !!meta.arg.originalArgs.cursor;
-        if (isLoadMore) {
+        const { cursor, newerCursor, around } = meta.arg.originalArgs;
+        if (around) {
+          state.messages = payload.data;
+        } else if (cursor) {
           state.messages = [...payload.data, ...state.messages];
+        } else if (newerCursor) {
+          state.messages = [...state.messages, ...payload.data];
         } else {
           state.messages = payload.data;
         }
-        state.hasMore = payload.pagination.hasMore;
-        state.nextCursor = payload.pagination.nextCursor;
+        
+        state.hasMoreOlder = payload.pagination.hasMoreOlder ?? state.hasMoreOlder;
+        if (payload.pagination.olderCursor !== undefined) {
+          state.olderCursor = payload.pagination.olderCursor;
+        }
+        
+        state.hasMoreNewer = payload.pagination.hasMoreNewer ?? state.hasMoreNewer;
+        if (payload.pagination.newerCursor !== undefined) {
+          state.newerCursor = payload.pagination.newerCursor;
+        }
       },
     );
     builder.addMatcher(authApi.endpoints.logout.matchFulfilled, () => initialState);

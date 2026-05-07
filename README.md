@@ -26,7 +26,8 @@
 ### 💬 Real-Time Messaging
 
 - Instant message delivery via WebSockets
-- Cursor-based message pagination with infinite scroll
+- Bi-directional infinite scroll with cursor-based pagination (jump to history)
+- Advanced message search with keyword highlighting
 - Text and image message support
 - Read receipts with live status sync
 - Live typing indicators
@@ -248,6 +249,7 @@ npm run dev
 | ------ | ----------------------- | --------------------------------------------- |
 | `GET`  | `/api/message/users`    | Get contacts with last message & unread count |
 | `GET`  | `/api/message/:id`      | Get paginated conversation history            |
+| `GET`  | `/api/message/search/:id`| Search for specific messages by keyword       |
 | `POST` | `/api/message/send/:id` | Send a text or image message                  |
 | `PUT`  | `/api/message/read/:id` | Mark messages from a user as read             |
 

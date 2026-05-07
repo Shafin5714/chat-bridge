@@ -30,6 +30,7 @@ const messageSchema = new mongoose.Schema(
 messageSchema.index({ senderId: 1, receiverId: 1 });
 messageSchema.index({ createdAt: -1 });
 messageSchema.index({ senderId: 1, receiverId: 1, read: 1 });
+messageSchema.index({ text: "text" });
 
 const Message = mongoose.model("Message", messageSchema);
 

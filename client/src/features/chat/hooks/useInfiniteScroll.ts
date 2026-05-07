@@ -1,16 +1,20 @@
 import { useEffect, useRef, useCallback } from "react";
 
 type UseInfiniteScrollOptions = {
-  hasMore: boolean;
+  hasMoreOlder: boolean;
+  hasMoreNewer: boolean;
   isLoading: boolean;
-  onLoadMore: () => void;
-  threshold?: number; // px from top to trigger
+  onLoadOlder: () => void;
+  onLoadNewer: () => void;
+  threshold?: number; // px from top/bottom to trigger
 };
 
 export function useInfiniteScroll({
-  hasMore,
+  hasMoreOlder,
+  hasMoreNewer,
   isLoading,
-  onLoadMore,
+  onLoadOlder,
+  onLoadNewer,
   threshold = 100,
 }: UseInfiniteScrollOptions) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -18,14 +22,21 @@ export function useInfiniteScroll({
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
-    if (!el || isLoading || !hasMore) return;
+    if (!el || isLoading) return;
 
-    if (el.scrollTop <= threshold) {
+    if (hasMoreOlder && el.scrollTop <= threshold) {
       // Save scroll height before loading to restore position after
       prevScrollHeightRef.current = el.scrollHeight;
-      onLoadMore();
+      onLoadOlder();
+      return;
     }
-  }, [hasMore, isLoading, onLoadMore, threshold]);
+
+    const scrollBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (hasMoreNewer && scrollBottom <= threshold) {
+      // Browser naturally handles appending to bottom without shifting current view
+      onLoadNewer();
+    }
+  }, [hasMoreOlder, hasMoreNewer, isLoading, onLoadOlder, onLoadNewer, threshold]);
 
   // Restore scroll position after older messages are prepended
   const restoreScrollPosition = useCallback(() => {
@@ -34,7 +45,7 @@ export function useInfiniteScroll({
     
     const newScrollHeight = el.scrollHeight;
     const addedHeight = newScrollHeight - prevScrollHeightRef.current;
-    el.scrollTop = addedHeight;
+    el.scrollTop = el.scrollTop + addedHeight;
     prevScrollHeightRef.current = 0;
   }, []);
 

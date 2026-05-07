@@ -41,23 +41,44 @@ export const messageApi = emptySplitApi.injectEndpoints({
     }),
     getMessages: builder.query<
       PaginatedMessagesResponse,
-      { userId: string; cursor?: string | null }
+      { userId: string; cursor?: string | null; newerCursor?: string | null; around?: string | null }
     >({
-      query: ({ userId, cursor }) => ({
+      query: ({ userId, cursor, newerCursor, around }) => ({
         url: `/message/${userId}`,
-        params: { ...(cursor ? { cursor } : {}), limit: 30 },
+        params: { ...(cursor ? { cursor } : {}), ...(newerCursor ? { newerCursor } : {}), ...(around ? { around } : {}), limit: 30 },
       }),
       providesTags: ["Message"],
       serializeQueryArgs: ({ queryArgs }) => queryArgs.userId,
       merge: (currentCache, newItems, { arg }) => {
-        if (!arg.cursor) {
+        if (arg.around) {
+          // Replace cache when jumping
           return newItems;
         }
-        return {
-          ...newItems,
-          data: [...newItems.data, ...currentCache.data],
-          pagination: newItems.pagination,
-        };
+        if (arg.newerCursor) {
+          // Append to bottom
+          return {
+            ...newItems,
+            data: [...currentCache.data, ...newItems.data],
+            pagination: {
+              ...currentCache.pagination,
+              newerCursor: newItems.pagination.newerCursor,
+              hasMoreNewer: newItems.pagination.hasMoreNewer,
+            },
+          };
+        }
+        if (arg.cursor) {
+          // Prepend to top
+          return {
+            ...newItems,
+            data: [...newItems.data, ...currentCache.data],
+            pagination: {
+              ...currentCache.pagination,
+              olderCursor: newItems.pagination.olderCursor,
+              hasMoreOlder: newItems.pagination.hasMoreOlder,
+            },
+          };
+        }
+        return newItems;
       },
       forceRefetch: ({ currentArg, previousArg }) => {
         return currentArg !== previousArg;
@@ -82,6 +103,14 @@ export const messageApi = emptySplitApi.injectEndpoints({
         );
       },
     }),
+    searchMessages: builder.query<
+      GetMessagesResponse,
+      { userId: string; q: string }
+    >({
+      query: ({ userId, q }) => ({
+        url: `/message/search/${userId}?q=${encodeURIComponent(q)}`,
+      }),
+    }),
   }),
 });
 
@@ -90,4 +119,5 @@ export const {
   useSendMessageMutation,
   useGetMessagesQuery,
   useMarkMessagesAsReadMutation,
+  useLazySearchMessagesQuery,
 } = messageApi;

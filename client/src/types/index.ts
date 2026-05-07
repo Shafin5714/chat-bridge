@@ -44,8 +44,10 @@ export type TypingData = {
 };
 
 export type PaginationInfo = {
-  nextCursor: string | null;
-  hasMore: boolean;
+  olderCursor: string | null;
+  newerCursor: string | null;
+  hasMoreOlder: boolean;
+  hasMoreNewer: boolean;
   limit: number;
 };
 

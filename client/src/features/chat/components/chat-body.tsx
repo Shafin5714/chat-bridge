@@ -11,12 +11,13 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Image, X, Loader2, Circle, Smile } from "lucide-react";
+import { Send, Image, X, Loader2, Circle, Smile, Search } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { toast } from "sonner";
 import {
   useSendMessageMutation,
   useGetMessagesQuery,
+  useLazySearchMessagesQuery,
 } from "@/store/api/messageApi";
 import imageCompression from "browser-image-compression";
 import { skipToken } from "@reduxjs/toolkit/query";
@@ -46,10 +47,19 @@ export default function Chat({ mobileView }: Props) {
     null,
   );
   const { selectedUser, onlineUsers } = useAppSelector((state) => state.user);
-  const { messages, hasMore, nextCursor } = useAppSelector((state) => state.message);
+  const { messages, hasMoreOlder, hasMoreNewer, olderCursor, newerCursor } = useAppSelector((state) => state.message);
   const { userInfo } = useAppSelector((state) => state.auth);
 
-  const [cursor, setCursor] = useState<string | null>(null);
+  const [paginationQuery, setPaginationQuery] = useState<{
+    cursor?: string | null;
+    newerCursor?: string | null;
+    around?: string | null;
+  } | null>(null);
+
+  // Search states
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchMessages, { data: searchResults, isFetching: isSearching }] = useLazySearchMessagesQuery();
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
     setText((prev) => prev + emojiData.emoji);
@@ -58,25 +68,72 @@ export default function Chat({ mobileView }: Props) {
   // api
   const [sendMessage, { isLoading }] = useSendMessageMutation();
   const userId = selectedUser?._id ?? skipToken;
-  const queryArgs = userId === skipToken ? skipToken : { userId, cursor };
+  const queryArgs = userId === skipToken ? skipToken : { userId, ...paginationQuery };
   const { data, refetch, isFetching } = useGetMessagesQuery(queryArgs, {
     refetchOnMountOrArgChange: true,
   });
 
+  // Debounced Search Effect
+  useEffect(() => {
+    if (!showSearch) {
+      setSearchQuery("");
+      return;
+    }
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery.trim() && selectedUser?._id) {
+        searchMessages({ userId: selectedUser._id, q: searchQuery });
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, showSearch, selectedUser?._id, searchMessages]);
+
+  const handleJumpToMessage = (messageId: string) => {
+    const el = document.getElementById(`msg-${messageId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("bg-blue-100", "dark:bg-blue-900/40");
+      setTimeout(() => el.classList.remove("bg-blue-100", "dark:bg-blue-900/40"), 2000);
+      setShowSearch(false);
+    } else {
+      setPaginationQuery({ around: messageId });
+      setShowSearch(false);
+    }
+  };
+
+  useEffect(() => {
+    if (paginationQuery?.around && !isFetching && messages.find((m) => m._id === paginationQuery.around)) {
+      const el = document.getElementById(`msg-${paginationQuery.around}`);
+      if (el) {
+        el.scrollIntoView({ block: "center" });
+        el.classList.add("bg-blue-100", "dark:bg-blue-900/40");
+        setTimeout(() => el.classList.remove("bg-blue-100", "dark:bg-blue-900/40"), 2000);
+      }
+    }
+  }, [paginationQuery?.around, isFetching, messages]);
+
+  const handleJumpToPresent = () => {
+    setPaginationQuery(null);
+  };
+
   const { scrollRef, handleScroll, restoreScrollPosition } = useInfiniteScroll({
-    hasMore,
+    hasMoreOlder,
+    hasMoreNewer,
     isLoading: isFetching,
-    onLoadMore: () => {
-      if (nextCursor) setCursor(nextCursor);
+    onLoadOlder: () => {
+      if (olderCursor) setPaginationQuery({ cursor: olderCursor });
+    },
+    onLoadNewer: () => {
+      if (newerCursor) setPaginationQuery({ newerCursor });
     },
   });
 
   // Restore position after older messages load
   useEffect(() => {
-    if (cursor && !isFetching) {
+    if (paginationQuery?.cursor && !isFetching) {
       restoreScrollPosition();
     }
-  }, [isFetching, cursor, restoreScrollPosition]);
+  }, [isFetching, paginationQuery?.cursor, restoreScrollPosition]);
 
   // Custom hooks for socket handling
   const handleNewMessage = useCallback((message: Message) => {
@@ -104,12 +161,12 @@ export default function Chat({ mobileView }: Props) {
 
   useEffect(() => {
     // Only auto-scroll to bottom on initial load or if we haven't scrolled up
-    if (!cursor) {
+    if (!paginationQuery) {
       setTimeout(() => {
         scrollToBottom();
       }, 500);
     }
-  }, [data, isTyping, cursor]);
+  }, [data, isTyping, paginationQuery]);
 
   // Mark messages as read when chat is opened with unread messages
   useEffect(() => {
@@ -128,17 +185,19 @@ export default function Chat({ mobileView }: Props) {
   useEffect(() => {
     const isMessageSentFromSelectedUser = newMessage?.senderId === userId;
     if (isMessageSentFromSelectedUser && newMessage) {
-      dispatch(messageSlice.actions.setMessage(newMessage));
-      setTimeout(() => scrollToBottom(), 100);
+      if (!hasMoreNewer) {
+        dispatch(messageSlice.actions.setMessage(newMessage));
+        setTimeout(() => scrollToBottom(), 100);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newMessage]);
+  }, [newMessage, hasMoreNewer]);
 
   // Reset form when switching users
   useEffect(() => {
     setText("");
     setImagePreview(null);
-    setCursor(null);
+    setPaginationQuery(null);
     setShowPicker(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, [selectedUser?._id]);
@@ -211,9 +270,10 @@ export default function Chat({ mobileView }: Props) {
         mobileView === "chat" ? "block" : "hidden"
       } lg:block`}
     >
-      <CardHeader className="h-16 px-4 py-3">
-        <div className="flex items-center gap-4">
-          <div className="relative">
+      <CardHeader className="relative h-16 px-4 py-3">
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative">
             <Avatar className="h-10 w-10">
               <AvatarImage src={selectedUser?.profilePic} />
               <AvatarFallback>
@@ -245,22 +305,76 @@ export default function Chat({ mobileView }: Props) {
               {userOnline ? "Online" : "Offline"}
             </p>
           </div>
+          </div>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowSearch(!showSearch)}
+            className="text-gray-500"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
         </div>
+
+        {showSearch && (
+          <div className="absolute left-0 right-0 top-16 z-20 border-b bg-white p-3 shadow-md dark:border-gray-800 dark:bg-gray-900">
+            <Input
+              autoFocus
+              placeholder="Search messages..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-gray-50 dark:bg-gray-800"
+            />
+            {searchQuery && (
+              <div className="absolute left-0 right-0 top-[100%] max-h-64 overflow-y-auto border bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
+                {isSearching ? (
+                  <div className="p-4 text-center text-sm text-gray-500">Searching...</div>
+                ) : searchResults?.data && searchResults.data.length > 0 ? (
+                  searchResults.data.map((msg) => (
+                    <div
+                      key={msg._id}
+                      className="cursor-pointer border-b p-3 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
+                      onClick={() => handleJumpToMessage(msg._id)}
+                    >
+                      <p className="line-clamp-2 text-sm text-gray-800 dark:text-gray-200">{msg.text}</p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {moment(msg.createdAt).format("MMM D, YYYY h:mm A")}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-sm text-gray-500">No messages found</div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </CardHeader>
       <Separator className="dark:bg-gray-700" />
-      <CardContent className="flex-1 overflow-hidden p-5 dark:bg-gray-900">
+      <CardContent className="relative flex-1 overflow-hidden p-5 dark:bg-gray-900">
+        {hasMoreNewer && (
+          <div className="absolute bottom-5 right-5 z-10">
+            <Button
+              onClick={handleJumpToPresent}
+              className="rounded-full shadow-lg transition-transform hover:scale-105"
+            >
+              ↓ Jump to Present
+            </Button>
+          </div>
+        )}
         <div
           ref={scrollRef}
           onScroll={handleScroll}
           className={`overflow-y-auto pr-3 h-[calc(100vh-22rem)] ${imagePreview ? "lg:h-[calc(100vh-18.5rem)]" : "lg:h-[calc(100vh-16rem)]"}`}
         >
-          <div className="flex flex-col justify-between gap-3 min-h-full">
-            {isFetching && cursor && (
+          <div className="flex min-h-full flex-col justify-between gap-3">
+            {isFetching && paginationQuery?.cursor && (
               <div className="flex justify-center py-2">
                 <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
               </div>
             )}
-            {!hasMore && messages.length > 0 && (
+            {!hasMoreOlder && messages.length > 0 && (
               <p className="py-2 text-center text-xs text-gray-400">
                 Beginning of conversation
               </p>
@@ -268,8 +382,9 @@ export default function Chat({ mobileView }: Props) {
             {messages.map((message) => (
               <div
                 key={message._id}
+                id={`msg-${message._id}`}
                 className={cn(
-                  "flex",
+                  "flex rounded-lg transition-colors duration-500",
                   message.senderId === userInfo?.id
                     ? "justify-end"
                     : "justify-start",
@@ -324,6 +439,11 @@ export default function Chat({ mobileView }: Props) {
               </div>
             ) : null}
             <div ref={msgEndRef} />
+            {isFetching && paginationQuery?.newerCursor && (
+              <div className="flex justify-center py-2">
+                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

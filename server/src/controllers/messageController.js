@@ -82,17 +82,77 @@ export const sendMessage = asyncHandler(async (req, res) => {
 export const getMessages = asyncHandler(async (req, res) => {
   const { id: userToChatId } = req.params;
   const myId = req.user._id;
-  const { cursor, limit: rawLimit } = req.query;
+  const { cursor, newerCursor, around, limit: rawLimit } = req.query;
 
   const limit = Math.min(parseInt(rawLimit) || 30, 50);
 
-  const filter = {
+  const baseFilter = {
     $or: [
       { senderId: myId, receiverId: userToChatId },
       { senderId: userToChatId, receiverId: myId },
     ],
   };
 
+  if (around) {
+    // Mode 3: Fetch 'around' a specific message
+    const halfLimit = Math.floor(limit / 2);
+    
+    // Find older
+    const olderMessages = await Message.find({ ...baseFilter, _id: { $lt: around } })
+      .sort({ createdAt: -1 })
+      .limit(halfLimit + 1);
+    
+    const hasMoreOlder = olderMessages.length > halfLimit;
+    if (hasMoreOlder) olderMessages.pop();
+    olderMessages.reverse();
+    
+    // Find newer (and the message itself)
+    const newerMessages = await Message.find({ ...baseFilter, _id: { $gte: around } })
+      .sort({ createdAt: 1 })
+      .limit(limit - halfLimit + 1);
+      
+    const hasMoreNewer = newerMessages.length > (limit - halfLimit);
+    if (hasMoreNewer) newerMessages.pop();
+    
+    const messages = [...olderMessages, ...newerMessages];
+    
+    return res.status(200).json({
+      success: true,
+      data: messages,
+      pagination: {
+        olderCursor: messages.length > 0 ? messages[0]._id : null,
+        hasMoreOlder,
+        newerCursor: messages.length > 0 ? messages[messages.length - 1]._id : null,
+        hasMoreNewer,
+        limit,
+      },
+    });
+  }
+
+  if (newerCursor) {
+    // Mode 2: Fetch newer
+    const messages = await Message.find({ ...baseFilter, _id: { $gt: newerCursor } })
+      .sort({ createdAt: 1 })
+      .limit(limit + 1);
+
+    const hasMoreNewer = messages.length > limit;
+    if (hasMoreNewer) messages.pop();
+    
+    return res.status(200).json({
+      success: true,
+      data: messages,
+      pagination: {
+        olderCursor: null, // Client should preserve its existing olderCursor
+        hasMoreOlder: null, // Client should preserve
+        newerCursor: messages.length > 0 ? messages[messages.length - 1]._id : null,
+        hasMoreNewer,
+        limit,
+      },
+    });
+  }
+
+  // Mode 1: Fetch older (or initial)
+  const filter = { ...baseFilter };
   if (cursor) {
     filter._id = { $lt: cursor };
   }
@@ -101,19 +161,19 @@ export const getMessages = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(limit + 1);
 
-  const hasMore = messages.length > limit;
-  if (hasMore) messages.pop();
+  const hasMoreOlder = messages.length > limit;
+  if (hasMoreOlder) messages.pop();
 
-  messages.reverse();
+  messages.reverse(); // Standardize ascending order for chat UI
 
-  const nextCursor = hasMore ? messages[0]._id : null;
-
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     data: messages,
     pagination: {
-      nextCursor,
-      hasMore,
+      olderCursor: messages.length > 0 ? messages[0]._id : null,
+      hasMoreOlder,
+      newerCursor: messages.length > 0 && !cursor ? messages[messages.length - 1]._id : null,
+      hasMoreNewer: false, // Initial fetch is at bottom, so no newer messages
       limit,
     },
   });
@@ -154,5 +214,33 @@ export const markMessagesAsRead = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Messages marked as read",
+  });
+});
+
+// @route   GET /api/message/search/:id
+// @desc    Search user messages
+// @access  Private
+export const searchMessages = asyncHandler(async (req, res) => {
+  const { id: userToChatId } = req.params;
+  const myId = req.user._id;
+  const { q } = req.query;
+
+  if (!q) {
+    return res.status(400).json({ success: false, message: "Search query is required" });
+  }
+
+  const messages = await Message.find({
+    $or: [
+      { senderId: myId, receiverId: userToChatId },
+      { senderId: userToChatId, receiverId: myId },
+    ],
+    $text: { $search: q },
+  })
+    .sort({ createdAt: -1 })
+    .limit(50);
+
+  res.status(200).json({
+    success: true,
+    data: messages,
   });
 });
