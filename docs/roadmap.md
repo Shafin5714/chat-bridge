@@ -23,16 +23,7 @@ After auditing the full codebase (server + client), here's what you currently ha
 
 ## 🔴 High Priority — Features & Fixes
 
-### 1. Input Validation & Sanitization
-
-> [!CAUTION]
-> No server-side input validation exists. The `register` and `login` controllers accept raw `req.body` without sanitization.
-
-- Add **express-validator** or **Zod** (you already use Zod on the client) for all endpoints
-- Sanitize message text to prevent XSS (use `dompurify` or `xss` on server)
-- Validate email format, password strength, name length
-
-**Complexity:** 🟢 Low
+(All high priority features completed)
 
 ---
 
@@ -177,7 +168,6 @@ Client-side encryption using the Web Crypto API. Messages stored encrypted in DB
 
 | Priority | Feature | Effort | Impact |
 |----------|---------|--------|--------|
-| 🔴 **P0** | Input Validation (#1) | Low | Security |
 | 🔴 **P0** | Helmet (#7) | Low | Security |
 | 🟡 **P2** | Last Seen (#5) | Low | UX |
 | 🟡 **P2** | Push Notifications (#6) | Low | UX |
