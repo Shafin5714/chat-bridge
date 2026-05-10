@@ -4,7 +4,7 @@ import type {
   FetchArgs,
   FetchBaseQueryError,
 } from "@reduxjs/toolkit/query";
-import { BASE_URL } from "@/constants";
+import { BASE_URL } from "@/config/env";
 import { toast } from "sonner";
 
 const baseQuery = fetchBaseQuery({

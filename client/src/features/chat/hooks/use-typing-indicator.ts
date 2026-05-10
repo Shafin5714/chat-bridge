@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSocketContext } from "@/contexts/socket-context";
+import { useSocketContext } from "@/providers/socket-provider";
 import type { TypingData } from "@/types";
 
 type UseTypingIndicatorOptions = {

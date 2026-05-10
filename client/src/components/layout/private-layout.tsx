@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { ModeToggle } from "./mode-toggle";
+import { ModeToggle } from "@/components/mode-toggle";
 import { Outlet } from "react-router";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { LogOut, User } from "lucide-react";
 import { useLogoutMutation } from "@/store/api/auth-api";
 import { toast } from "sonner";
 import { useAppSelector } from "@/store";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileModal } from "@/features/chat/components/profile-modal";
 
 export default function PrivateLayout() {

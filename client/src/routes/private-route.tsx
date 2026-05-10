@@ -1,5 +1,5 @@
 import { Navigate } from "react-router";
-import PrivateLayout from "@/components/private-layout";
+import PrivateLayout from "@/components/layout/private-layout";
 import { useAppSelector } from "@/store";
 
 export const PrivateRoute = () => {

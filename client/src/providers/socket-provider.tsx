@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { conversationSlice } from "@/store/slices";
-import { BACKEND_URL } from "@/constants";
+import { BACKEND_URL } from "@/config/env";
 import type { Conversation } from "@/types";
 
 type Props = {

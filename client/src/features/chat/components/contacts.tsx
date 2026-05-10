@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { conversationSlice } from "@/store/slices";
-import { useSocketContext } from "@/contexts/socket-context";
+import { useSocketContext } from "@/providers/socket-provider";
 import { useEffect, useState } from "react";
 import { Circle, Search, Users } from "lucide-react";
 import { cn } from "@/lib/utils";

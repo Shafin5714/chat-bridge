@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAppDispatch } from "@/store";
-import { useSocketContext } from "@/contexts/socket-context";
+import { useSocketContext } from "@/providers/socket-provider";
 import { conversationSlice } from "@/store/slices";
 import type { Message, Conversation } from "@/types";
 

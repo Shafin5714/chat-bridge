@@ -4,7 +4,7 @@ import { Chat } from "@/features/chat";
 
 import { PrivateRoute } from "./private-route";
 import { PublicRoute } from "./public-route";
-import Error404 from "@/components/not-found";
+import Error404 from "@/components/layout/not-found";
 import { Login, Register } from "@/features/auth";
 
 export const AppRoutes = () => {

@@ -1,8 +1,8 @@
-import "./App.css";
+
 import { Toaster } from "@/components/ui/sonner";
 import { AppRoutes } from "@/routes";
-import { SocketProvider } from "@/contexts/socket-context";
-import { ThemeProvider } from "@/components/theme-provider";
+import { SocketProvider } from "@/providers/socket-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
 import { Provider } from "react-redux";
 import store from "./store";
 
