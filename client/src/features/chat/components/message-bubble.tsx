@@ -63,7 +63,7 @@ export default function MessageBubble({
           <img
             src={message.image || "/placeholder.svg"}
             alt="Shared"
-            className="mb-2 max-w-sm rounded-lg"
+            className="mb-2 max-h-[350px] max-w-[280px] sm:max-w-[320px] rounded-lg object-contain bg-black/5 dark:bg-white/5"
             onLoad={onLoad}
           />
         )}
@@ -89,7 +89,7 @@ export default function MessageBubble({
               <img
                 src={message.attachment.url}
                 alt="Shared"
-                className="max-w-xs md:max-w-sm rounded-lg object-cover"
+                className="max-h-[350px] max-w-[280px] sm:max-w-[320px] rounded-lg object-contain bg-black/5 dark:bg-white/5"
                 onLoad={onLoad}
               />
             ) : (
