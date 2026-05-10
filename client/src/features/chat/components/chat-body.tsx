@@ -14,9 +14,12 @@ import ChatInput from "./chat-input";
 
 type Props = {
   mobileView: string;
+  setMobileView: React.Dispatch<
+    React.SetStateAction<"contacts" | "chat" | "media">
+  >;
 };
 
-export default function Chat({ mobileView }: Props) {
+export default function Chat({ mobileView, setMobileView }: Props) {
   const dispatch = useAppDispatch();
 
   // states
@@ -208,6 +211,7 @@ export default function Chat({ mobileView }: Props) {
         setShowSearch={setShowSearch}
         conversationId={selectedConversation?._id}
         onJumpToMessage={handleJumpToMessage}
+        setMobileView={setMobileView}
       />
       <Separator className="dark:bg-gray-700" />
       <ChatMessages

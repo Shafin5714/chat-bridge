@@ -21,9 +21,12 @@ import type { Conversation, User } from "@/types";
 
 type Props = {
   mobileView: string;
+  setMobileView: React.Dispatch<
+    React.SetStateAction<"contacts" | "chat" | "media">
+  >;
 };
 
-export default function Contacts({ mobileView }: Props) {
+export default function Contacts({ mobileView, setMobileView }: Props) {
   const { socket } = useSocketContext();
   const dispatch = useAppDispatch();
 
@@ -156,11 +159,12 @@ export default function Contacts({ mobileView }: Props) {
                     return (
                       <div
                         key={conv._id}
-                        onClick={() =>
+                        onClick={() => {
                           dispatch(
                             conversationSlice.actions.setSelectedConversation(conv)
-                          )
-                        }
+                          );
+                          setMobileView("chat");
+                        }}
                         className={cn(
                           "flex cursor-pointer items-center space-x-4 rounded-lg border p-2 transition-colors duration-200",
                           selectedConversation?._id === conv._id

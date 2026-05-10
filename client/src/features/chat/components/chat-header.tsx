@@ -1,7 +1,7 @@
 import { CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Users, User as UserIcon, Circle } from "lucide-react";
+import { Search, Users, User as UserIcon, Circle, ChevronLeft, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChatSearch from "./chat-search";
 
@@ -15,6 +15,9 @@ type ChatHeaderProps = {
   setShowSearch: (show: boolean) => void;
   conversationId?: string;
   onJumpToMessage: (messageId: string) => void;
+  setMobileView: React.Dispatch<
+    React.SetStateAction<"contacts" | "chat" | "media">
+  >;
 };
 
 export default function ChatHeader({
@@ -27,11 +30,20 @@ export default function ChatHeader({
   setShowSearch,
   conversationId,
   onJumpToMessage,
+  setMobileView,
 }: ChatHeaderProps) {
   return (
-    <CardHeader className="relative h-16 px-4 py-3">
+    <CardHeader className="relative h-16 px-4 py-3 shrink-0">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileView("contacts")}
+            className="lg:hidden -ml-2 text-gray-500"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
           <div className="relative">
             <Avatar className="h-10 w-10">
               <AvatarImage src={headerAvatar} />
@@ -80,14 +92,24 @@ export default function ChatHeader({
           </div>
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setShowSearch(!showSearch)}
-          className="text-gray-500"
-        >
-          <Search className="h-5 w-5" />
-        </Button>
+        <div className="flex">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowSearch(!showSearch)}
+            className="text-gray-500"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileView("media")}
+            className="lg:hidden text-gray-500"
+          >
+            <Image className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
       {showSearch && conversationId && (

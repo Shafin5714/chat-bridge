@@ -2,12 +2,17 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useAppSelector } from "@/store";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
 
 type Props = {
   mobileView: string;
+  setMobileView: React.Dispatch<
+    React.SetStateAction<"contacts" | "chat" | "media">
+  >;
 };
 
-function SharedMedia({ mobileView }: Props) {
+function SharedMedia({ mobileView, setMobileView }: Props) {
   const { messages } = useAppSelector((state) => state.message);
 
   const images = messages
@@ -20,7 +25,15 @@ function SharedMedia({ mobileView }: Props) {
         mobileView === "media" ? "block" : "hidden"
       } lg:block`}
     >
-      <CardHeader className="h-16 px-4 py-4">
+      <CardHeader className="flex flex-row items-center h-16 px-4 py-4 space-y-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setMobileView("chat")}
+          className="lg:hidden -ml-2 mr-2 text-gray-500"
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </Button>
         <h2 className="text-xl font-bold">Shared Media</h2>
       </CardHeader>
       <Separator className="mb-4 dark:bg-gray-700" />
