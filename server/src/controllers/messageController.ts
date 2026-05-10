@@ -10,7 +10,7 @@ import { io } from "../lib/socket";
 // @desc    Send message to a conversation
 // @access  Private
 export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
-  const { text, image } = req.body;
+  const { text, image, attachment } = req.body;
   const { conversationId } = req.params;
   const senderId = req.user?._id;
 
@@ -37,11 +37,31 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
     imageUrl = uploadResponse.secure_url;
   }
 
+  let attachmentData;
+  if (attachment && attachment.data) {
+    // Determine the correct Cloudinary resource_type from the MIME type
+    let resourceType: "image" | "video" | "raw" | "auto" = "raw";
+    if (attachment.type.startsWith("image")) resourceType = "image";
+    else if (attachment.type.startsWith("video") || attachment.type.startsWith("audio")) resourceType = "video";
+
+    const uploadResponse = await cloudinary.uploader.upload(attachment.data, {
+      folder: "chat-bridge/attachments",
+      resource_type: resourceType,
+    });
+    attachmentData = {
+      url: uploadResponse.secure_url,
+      name: attachment.name,
+      type: attachment.type,
+      size: attachment.size,
+    };
+  }
+
   const newMessage = new Message({
     conversationId,
     senderId,
     text,
     image: imageUrl,
+    attachment: attachmentData,
   });
 
   await newMessage.save();

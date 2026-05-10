@@ -115,6 +115,9 @@ export default function ChatMessages({
                 isMe={isMe}
                 isGroup={isGroup}
                 sender={sender}
+                onLoad={() => {
+                  if (!showScrollBottom) scrollToBottom();
+                }}
               />
             );
           })}

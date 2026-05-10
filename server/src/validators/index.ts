@@ -36,8 +36,14 @@ export const sendMessageSchema = z.object({
   body: z.object({
     text: z.string().nullish().transform(val => val ? xss(val) : val),
     image: z.string().nullish(),
-  }).refine(data => (data.text && data.text.trim().length > 0) || (data.image && data.image.length > 0), {
-    message: "Message must contain text or an image",
+    attachment: z.object({
+      data: z.string(),
+      name: z.string(),
+      type: z.string(),
+      size: z.number(),
+    }).nullish(),
+  }).refine(data => (data.text && data.text.trim().length > 0) || (data.image && data.image.length > 0) || !!data.attachment, {
+    message: "Message must contain text, an image, or an attachment",
     path: ["text"],
   }),
 });

@@ -5,6 +5,12 @@ export interface IMessage extends Document {
   senderId: mongoose.Types.ObjectId;
   text?: string;
   image?: string;
+  attachment?: {
+    url: string;
+    name: string;
+    type: string;
+    size: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,6 +32,18 @@ const messageSchema = new Schema<IMessage>(
     },
     image: {
       type: String,
+    },
+    attachment: {
+      type: new Schema(
+        {
+          url: { type: String, required: true },
+          name: { type: String, required: true },
+          type: { type: String, required: true },
+          size: { type: Number, required: true },
+        },
+        { _id: false }
+      ),
+      default: undefined,
     },
   },
   { timestamps: true }

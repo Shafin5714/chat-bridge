@@ -3,8 +3,14 @@ import type { Message, PaginatedMessagesResponse } from "@/types";
 
 export type SendMessageRequest = {
   conversationId: string;
-  text: string;
-  image: string;
+  text?: string;
+  image?: string;
+  attachment?: {
+    data: string;
+    name: string;
+    type: string;
+    size: number;
+  };
 };
 
 type SendMessageResponse = {
@@ -20,13 +26,10 @@ type GetMessagesResponse = {
 export const messageApi = emptySplitApi.injectEndpoints({
   endpoints: (builder) => ({
     sendMessage: builder.mutation<SendMessageResponse, SendMessageRequest>({
-      query: (data) => ({
-        url: `/message/send/${data.conversationId}`,
+      query: ({ conversationId, ...body }) => ({
+        url: `/message/send/${conversationId}`,
         method: "POST",
-        body: {
-          text: data.text,
-          image: data.image,
-        },
+        body,
       }),
     }),
     getMessages: builder.query<

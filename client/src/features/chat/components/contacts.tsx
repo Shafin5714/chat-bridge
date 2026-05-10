@@ -90,6 +90,12 @@ export default function Contacts({ mobileView, setMobileView }: Props) {
   const getLastMessageText = (conv: Conversation): string => {
     if (!conv.lastMessage) return "No messages yet";
     if (conv.lastMessage.image && !conv.lastMessage.text) return "📷 Image";
+    if (conv.lastMessage.attachment && !conv.lastMessage.text) {
+      const type = conv.lastMessage.attachment.type;
+      if (type.startsWith("video")) return "🎬 Video";
+      if (type.startsWith("audio")) return "🎵 Audio";
+      return "📎 File";
+    }
     return conv.lastMessage.text || "No messages yet";
   };
 

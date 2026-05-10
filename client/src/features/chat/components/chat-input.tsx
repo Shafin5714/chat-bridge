@@ -1,7 +1,7 @@
 import { useState, useRef, ChangeEvent, FormEvent, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image, Smile, X, Loader2 } from "lucide-react";
+import { Send, Paperclip, Smile, X, Loader2, FileIcon } from "lucide-react";
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 import imageCompression from "browser-image-compression";
 import { toast } from "sonner";
@@ -23,9 +23,12 @@ export default function ChatInput({
   const dispatch = useAppDispatch();
   const [text, setText] = useState("");
   const [showPicker, setShowPicker] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>(
-    null,
-  );
+  const [attachmentPreview, setAttachmentPreview] = useState<{
+    data: string | ArrayBuffer | null;
+    name: string;
+    type: string;
+    size: number;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [sendMessage, { isLoading }] = useSendMessageMutation();
@@ -33,7 +36,7 @@ export default function ChatInput({
   // Reset local state when conversation changes
   useEffect(() => {
     setText("");
-    setImagePreview(null);
+    setAttachmentPreview(null);
     setShowPicker(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, [conversationId]);
@@ -70,35 +73,59 @@ export default function ChatInput({
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    if (!file.type.startsWith("image")) {
-      toast.error("Please select an image file.");
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_SIZE) {
+      toast.error("File size cannot exceed 10MB.");
       return;
     }
 
-    const compressedFile = await compressImage(file);
+    let fileToProcess = file;
+    if (file.type.startsWith("image")) {
+      fileToProcess = await compressImage(file);
+    }
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setImagePreview(reader.result);
+      setAttachmentPreview({
+        data: reader.result,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
     };
-    reader.readAsDataURL(compressedFile);
+    reader.readAsDataURL(fileToProcess);
   };
 
   const handleRemove = (): void => {
-    setImagePreview(null);
+    setAttachmentPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSendMessage = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!text.trim() && !imagePreview) return;
+    if (!text.trim() && !attachmentPreview) return;
     if (!conversationId) return;
 
-    const res = await sendMessage({
-      conversationId,
-      text,
-      image: imagePreview as string,
-    }).unwrap();
+    let payload: any = { conversationId };
+
+    if (text.trim()) {
+      payload.text = text.trim();
+    }
+
+    if (attachmentPreview) {
+      if (attachmentPreview.type.startsWith("image")) {
+        payload.image = attachmentPreview.data as string;
+      } else {
+        payload.attachment = {
+          data: attachmentPreview.data as string,
+          name: attachmentPreview.name,
+          type: attachmentPreview.type,
+          size: attachmentPreview.size,
+        };
+      }
+    }
+
+    const res = await sendMessage(payload).unwrap();
 
     if (res.success) {
       handleRemove();
@@ -110,25 +137,42 @@ export default function ChatInput({
 
   return (
     <div className="px-3">
-      {imagePreview ? (
-        <div className="relative max-h-16 w-16 rounded-sm border border-solid border-gray-400">
+      {attachmentPreview ? (
+        <div className="relative mb-2 flex items-center gap-3 rounded-md border border-gray-200 bg-gray-50 p-2 pr-8 dark:border-gray-800 dark:bg-gray-900 w-fit">
           <Button
             variant="destructive"
             size="icon"
-            className="absolute right-[-5px] top-[-5px] m-0 h-5 w-5 rounded-xl p-1"
+            className="absolute right-[-8px] top-[-8px] m-0 h-5 w-5 rounded-full p-1 shadow-md"
             onClick={handleRemove}
           >
-            <X />
+            <X className="h-3 w-3" />
           </Button>
-          <img
-            src={imagePreview as string}
-            className="h-10 w-28"
-            alt="preview"
-          />
+          
+          {attachmentPreview.type.startsWith("image") ? (
+            <img
+              src={attachmentPreview.data as string}
+              className="h-16 w-auto rounded-sm object-cover"
+              alt="preview"
+            />
+          ) : (
+            <div className="flex items-center gap-2 px-2 py-1">
+              <div className="rounded-md bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <FileIcon className="h-6 w-6" />
+              </div>
+              <div className="flex flex-col">
+                <span className="max-w-[150px] truncate text-sm font-medium dark:text-gray-200">
+                  {attachmentPreview.name}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {(attachmentPreview.size / 1024 / 1024).toFixed(2)} MB
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       ) : null}
 
-      <div className="mb-4 mt-3 w-full">
+      <div className="mb-4 w-full">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -172,7 +216,7 @@ export default function ChatInput({
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileChange}
-                  accept="image/*"
+                  accept="image/*,video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain"
                   className="hidden"
                 />
                 <Button
@@ -186,7 +230,7 @@ export default function ChatInput({
                     fileInputRef.current?.click();
                   }}
                 >
-                  <Image className="h-5 w-5" />
+                  <Paperclip className="h-5 w-5" />
                 </Button>
               </div>
             </div>

@@ -16,6 +16,12 @@ export type Message = {
         profilePic?: string;
       };
   text: string;
+  attachment?: {
+    url: string;
+    name: string;
+    type: string;
+    size: number;
+  };
   updatedAt: string;
 };
 

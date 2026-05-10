@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User as UserIcon } from "lucide-react";
+import { User as UserIcon, FileIcon, Download } from "lucide-react";
 import moment from "moment";
-import { cn } from "@/lib/utils";
+import { cn, downloadFile } from "@/lib/utils";
 import type { Message } from "@/types";
 
 type SenderInfo = {
@@ -15,6 +15,7 @@ type MessageBubbleProps = {
   isMe: boolean;
   isGroup: boolean;
   sender: SenderInfo;
+  onLoad?: () => void;
 };
 
 export default function MessageBubble({
@@ -22,6 +23,7 @@ export default function MessageBubble({
   isMe,
   isGroup,
   sender,
+  onLoad,
 }: MessageBubbleProps) {
   return (
     <div
@@ -55,12 +57,65 @@ export default function MessageBubble({
             {sender.name}
           </p>
         )}
-        {message.image && (
+        
+        {/* Legacy image support */}
+        {message.image && !message.attachment && (
           <img
             src={message.image || "/placeholder.svg"}
             alt="Shared"
             className="mb-2 max-w-sm rounded-lg"
+            onLoad={onLoad}
           />
+        )}
+
+        {/* Multi-file attachment support */}
+        {message.attachment && (
+          <div className="mb-2">
+            {message.attachment.type.startsWith("video") ? (
+              <video
+                controls
+                src={message.attachment.url}
+                className="max-w-xs md:max-w-sm rounded-lg"
+                onLoadedData={onLoad}
+              />
+            ) : message.attachment.type.startsWith("audio") ? (
+              <audio
+                controls
+                src={message.attachment.url}
+                className="max-w-xs md:max-w-sm"
+                onLoadedData={onLoad}
+              />
+            ) : message.attachment.type.startsWith("image") ? (
+              <img
+                src={message.attachment.url}
+                alt="Shared"
+                className="max-w-xs md:max-w-sm rounded-lg object-cover"
+                onLoad={onLoad}
+              />
+            ) : (
+              <button
+                onClick={() => downloadFile(message.attachment!.url, message.attachment!.name)}
+                className={`flex w-full cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
+                  isMe
+                    ? "border-blue-400 bg-blue-600 hover:bg-blue-700"
+                    : "border-gray-300 bg-gray-100 hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
+                }`}
+              >
+                <div className={cn("rounded-md p-2", isMe ? "bg-blue-500" : "bg-white dark:bg-gray-800")}>
+                  <FileIcon className="h-6 w-6" />
+                </div>
+                <div className="flex flex-col flex-1 text-left">
+                  <span className="max-w-[150px] truncate text-sm font-medium">
+                    {message.attachment.name}
+                  </span>
+                  <span className={cn("text-xs", isMe ? "text-blue-200" : "text-gray-500")}>
+                    {(message.attachment.size / 1024 / 1024).toFixed(2)} MB
+                  </span>
+                </div>
+                <Download className={cn("h-4 w-4 shrink-0", isMe ? "text-blue-200" : "text-gray-500")} />
+              </button>
+            )}
+          </div>
         )}
         <p className="text-[1rem]">{message.text}</p>
         <p
