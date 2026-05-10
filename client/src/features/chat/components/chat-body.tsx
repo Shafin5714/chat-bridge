@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Image, X, Loader2, Circle, Smile, Search, Users } from "lucide-react";
+import { Send, Image, X, Loader2, Circle, Smile, Search, Users, ChevronDown } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { toast } from "sonner";
 import {
@@ -60,6 +60,7 @@ export default function Chat({ mobileView }: Props) {
   // Search states
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
   const [searchMessages, { data: searchResults, isFetching: isSearching }] =
     useLazySearchMessagesQuery();
 
@@ -145,6 +146,13 @@ export default function Chat({ mobileView }: Props) {
       if (newerCursor) setPaginationQuery({ newerCursor });
     },
   });
+
+  const onScrollWrapper = (e: React.UIEvent<HTMLDivElement>) => {
+    handleScroll();
+    const el = e.currentTarget;
+    const scrollBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setShowScrollBottom(scrollBottom > 200);
+  };
 
   // Restore position after older messages load
   useEffect(() => {
@@ -442,9 +450,21 @@ export default function Chat({ mobileView }: Props) {
             </Button>
           </div>
         )}
+        {!hasMoreNewer && showScrollBottom && (
+          <div className="absolute bottom-5 left-1/2 z-10 -translate-x-1/2">
+            <Button
+              onClick={scrollToBottom}
+              variant="secondary"
+              size="icon"
+              className="rounded-full border bg-white shadow-lg transition-transform hover:scale-105 dark:bg-gray-800"
+            >
+              <ChevronDown className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+            </Button>
+          </div>
+        )}
         <div
           ref={scrollRef}
-          onScroll={handleScroll}
+          onScroll={onScrollWrapper}
           className={`overflow-y-auto pr-3 h-[calc(100vh-22rem)] ${imagePreview ? "lg:h-[calc(100vh-18.5rem)]" : "lg:h-[calc(100vh-16rem)]"}`}
         >
           <div className="flex min-h-full flex-col justify-between gap-3">
