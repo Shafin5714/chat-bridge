@@ -2,7 +2,7 @@
 
 # 💬 Chat Bridge
 
-**A full-stack real-time chat application with WebSocket-powered messaging, media sharing, and online presence tracking.**
+**A full-stack real-time chat application with WebSocket-powered messaging, multi-file sharing, and secure token-based authentication.**
 
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -26,10 +26,10 @@
 ### 💬 Real-Time Messaging
 
 - Instant message delivery via WebSockets
-- Bi-directional infinite scroll with cursor-based pagination (jump to history)
+- Bi-directional infinite scroll with cursor-based pagination
 - Advanced message search with keyword highlighting
-- Text and image message support
-- Live typing indicators
+- Live typing indicators (per-user in group chats)
+- "Last seen" timestamps for offline users
 
 </td>
 <td width="50%">
@@ -47,12 +47,15 @@
 <tr>
 <td width="50%">
 
-### 📸 Media Sharing
+### 📎 Multi-File Sharing
 
-- Image upload via Cloudinary CDN
-- Client-side image compression
-- Base64 encoding for seamless uploads
-- Shared media gallery per conversation
+- **Images**: Client-side compression via `browser-image-compression` before upload
+- **Video & Audio**: Native HTML5 playback (`<video>`, `<audio>`) directly in chat
+- **Documents**: PDF, DOCX, XLSX, TXT with download-preserving file cards
+- Cloudinary CDN with dynamic `resource_type` mapping (image / video / raw)
+- 10 MB client-side file size limit
+- Blob-based download logic to preserve original filenames and extensions
+- Shared Media & Files gallery per conversation
 
 </td>
 <td width="50%">
@@ -60,10 +63,40 @@
 ### 🎨 Modern UI/UX
 
 - Dark / Light theme toggle
-- Fully responsive (mobile-first design)
+- Fully responsive (mobile-first design with contacts ↔ chat ↔ media views)
 - Emoji picker integration
-- Real-time online/offline status
+- Real-time online/offline presence indicators
 - Accessible UI with Radix primitives
+- Optimized image rendering with constrained dimensions
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 🔐 Security & Authentication
+
+- **JWT Refresh Token Flow**: Short-lived access tokens (15 min) + long-lived refresh tokens (7 days)
+- Full token rotation on refresh with reuse detection
+- Server-side token revocation on logout (hashed tokens stored in DB)
+- Automatic silent refresh via RTK Query `baseQueryWithReauth`
+- HTTP-only, secure, SameSite cookies
+- **Helmet** security headers (HSTS, CSP, XSS protection)
+- Rate limiting on auth endpoints
+- XSS sanitization on user input
+- Zod schema validation on all API inputs
+
+</td>
+<td width="50%">
+
+### 🛡️ Robust Error Handling
+
+- Mongoose `ValidationError` → `400` with field-level messages
+- Mongoose `CastError` (bad ObjectId) → `400` "Resource not found"
+- MongoDB duplicate key (code 11000) → `409` with duplicate field name
+- `JsonWebTokenError` → `401` "Token invalid"
+- `TokenExpiredError` → `401` "Token expired"
+- Graceful fallback for all unhandled errors
 
 </td>
 </tr>
@@ -84,18 +117,24 @@
 | **Radix UI**                      | Accessible, unstyled component primitives |
 | **Socket.IO Client**              | Bi-directional real-time communication    |
 | **React Hook Form** + **Zod**     | Form handling with schema validation      |
+| **browser-image-compression**     | Client-side image optimization            |
 | **Lucide React**                  | Icon library                              |
+| **Moment.js**                     | Human-readable time formatting            |
 
 ### Backend
 
-| Technology                 | Purpose                                         |
-| -------------------------- | ----------------------------------------------- |
-| **Node.js** + **Express**  | REST API server                                 |
-| **MongoDB** + **Mongoose** | NoSQL database with ODM                         |
-| **Socket.IO**              | WebSocket server for real-time events           |
-| **JWT** + **Cookies**      | Stateless authentication with HTTP-only cookies |
-| **Cloudinary**             | Cloud-based image storage and CDN               |
-| **bcryptjs**               | Secure password hashing                         |
+| Technology                 | Purpose                                              |
+| -------------------------- | ---------------------------------------------------- |
+| **Node.js** + **Express**  | REST API server                                      |
+| **MongoDB** + **Mongoose** | NoSQL database with ODM                              |
+| **Socket.IO**              | WebSocket server for real-time events                |
+| **JWT** + **Cookies**      | Dual-token auth with HTTP-only cookies               |
+| **Cloudinary**             | Cloud-based file storage and CDN (image/video/raw)   |
+| **bcryptjs**               | Password hashing and refresh token hashing           |
+| **Helmet**                 | Production-ready HTTP security headers               |
+| **Zod**                    | Runtime request validation                           |
+| **xss**                    | Input sanitization                                   |
+| **express-rate-limit**     | Brute-force protection on auth routes                |
 
 ---
 
@@ -107,35 +146,36 @@ chat-bridge/
 │   └── src/
 │       ├── components/              # Shared UI components
 │       │   ├── ui/                  # Radix-based design system (Button, Avatar, Dialog…)
-│       │   ├── private-layout.tsx   # Authenticated app shell with navbar
-│       │   ├── mode-toggle.tsx      # Dark/light theme switcher
-│       │   └── theme-provider.tsx   # Theme context provider
+│       │   └── layout/             # Private layout, navbar, theme toggle
 │       ├── contexts/
 │       │   └── socket-context.tsx   # Socket.IO connection provider
 │       ├── features/
-│       │   ├── auth/                # Login & Registration pages
+│       │   ├── auth/                # Login & Registration (pages + hooks)
 │       │   └── chat/
-│       │       ├── components/      # Chat UI (ChatBody, Contacts, ProfileModal…)
-│       │       ├── hooks/           # useChatSocket, useTypingIndicator
+│       │       ├── components/      # ChatBody, Contacts, MessageBubble, SharedMedia…
+│       │       ├── hooks/           # useChatSocket, useTypingIndicator, useInfiniteScroll
 │       │       └── pages/           # Chat page layout
+│       ├── lib/
+│       │   └── utils.ts             # Shared utilities (cn, downloadFile)
 │       ├── store/
-│       │   ├── api/                 # RTK Query endpoints (auth, messages, users)
-│       │   └── slices/              # Redux slices (auth, messages, users)
+│       │   ├── api/                 # RTK Query endpoints (auth, messages, users, conversations)
+│       │   └── slices/              # Redux slices (auth, messages, conversations)
 │       ├── routes/                  # React Router config with auth guards
 │       └── types/                   # Shared TypeScript interfaces
 │
-├── server/                          # Express API server (ES Modules)
+├── server/                          # Express API server (TypeScript + ESM)
 │   └── src/
 │       ├── config/                  # Database connection
-│       ├── controllers/             # Route handlers (auth, messages, users)
+│       ├── controllers/             # Route handlers (auth, messages, users, conversations)
 │       ├── lib/
-│       │   ├── socket.js            # Socket.IO server setup & event handlers
-│       │   └── cloudinary.js        # Cloudinary SDK config
-│       ├── middlewares/             # Auth guard, async handler, error handler
-│       ├── models/                  # Mongoose schemas (User, Message)
+│       │   ├── socket.ts            # Socket.IO server setup & event handlers
+│       │   └── cloudinary.ts        # Cloudinary SDK config
+│       ├── middlewares/             # Auth guard, rate limiter, error handler, validation
+│       ├── models/                  # Mongoose schemas (User, Message, Conversation)
 │       ├── routes/                  # Express route definitions
 │       ├── services/                # Business logic layer
-│       └── utils/                   # Logger and helpers
+│       ├── validators/              # Zod validation schemas
+│       └── utils/                   # Logger, token generation
 │
 └── package.json                     # Monorepo root (concurrently)
 ```
@@ -148,8 +188,7 @@ chat-bridge/
 │  (React +    │   • newMessage            │  (Express +  │
 │   Socket.IO) │   • typingMessage         │   Socket.IO) │
 │              │   • getOnlineUsers        │              │
-│              │   • updatedUsers          │              │
-│              │   • messagesRead          │              │
+│              │   • joinConversation      │              │
 └──────────────┘                           └──────┬───────┘
                                                   │
                                                   │ WebSocket
@@ -161,15 +200,38 @@ chat-bridge/
                                            └──────────────┘
 ```
 
+### Authentication Flow
+
+```
+┌─────────┐                        ┌─────────┐                    ┌────────┐
+│  Client  │  POST /auth/login     │  Server  │  Hash & Store     │ MongoDB│
+│          │ ─────────────────────► │          │ ─────────────────►│        │
+│          │                       │          │  Refresh Token     │        │
+│          │  Set-Cookie: jwt (15m)│          │                    │        │
+│          │  Set-Cookie: refresh  │          │                    │        │
+│          │ ◄─────────────────────│          │                    │        │
+│          │         (7d)          │          │                    │        │
+│          │                       │          │                    │        │
+│  ...15 min later...              │          │                    │        │
+│          │                       │          │                    │        │
+│          │  API call → 401       │          │                    │        │
+│          │  POST /auth/refresh   │          │  Verify hash       │        │
+│          │ ─────────────────────►│          │ ◄────────────────►│        │
+│          │  New jwt + refresh    │          │  Rotate token      │        │
+│          │ ◄─────────────────────│          │                    │        │
+│          │  Retry original call  │          │                    │        │
+└─────────┘                        └─────────┘                    └────────┘
+```
+
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Node.js** v16+
-- **MongoDB** v4.4+ (local or Atlas)
-- **npm** or **yarn**
+- **Node.js** v18+
+- **MongoDB** v6+ (local or Atlas)
+- **npm** v9+
 - A [Cloudinary](https://cloudinary.com/) account (free tier works)
 
 ### Installation
@@ -195,12 +257,15 @@ cp server/.env.example server/.env
 ```env
 MONGO_URI=mongodb://127.0.0.1:27017/chatbridge
 NODE_ENV=development
-JWT_EXPIRES_IN=1h
-JWT_SECRET="YourSecretKey"
+JWT_SECRET="YourAccessTokenSecret"
+JWT_REFRESH_SECRET="YourRefreshTokenSecret"
+CORS_ORIGIN=http://localhost:5173
 CLOUDINARY_CLOUD_NAME="your_cloud_name"
 CLOUDINARY_API_KEY="your_api_key"
 CLOUDINARY_API_SECRET="your_api_secret"
 ```
+
+> **Note:** Use different, strong secrets for `JWT_SECRET` and `JWT_REFRESH_SECRET` in production.
 
 </details>
 
@@ -238,11 +303,12 @@ npm run dev
 
 ### Authentication
 
-| Method | Endpoint             | Description                  |
-| ------ | -------------------- | ---------------------------- |
-| `POST` | `/api/auth/register` | Register a new user          |
-| `POST` | `/api/auth/login`    | Login and receive JWT cookie |
-| `POST` | `/api/auth/logout`   | Clear auth cookie            |
+| Method | Endpoint             | Description                                |
+| ------ | -------------------- | ------------------------------------------ |
+| `POST` | `/api/auth/register` | Register a new user                        |
+| `POST` | `/api/auth/login`    | Login (sets access + refresh token cookies)|
+| `POST` | `/api/auth/logout`   | Clear cookies and revoke refresh token     |
+| `POST` | `/api/auth/refresh`  | Rotate tokens (issue new access + refresh) |
 
 ### Conversations
 
@@ -258,11 +324,11 @@ npm run dev
 
 ### Messages
 
-| Method | Endpoint                              | Description                                  |
-| ------ | ------------------------------------- | -------------------------------------------- |
-| `GET`  | `/api/message/:conversationId`        | Get paginated conversation history           |
-| `GET`  | `/api/message/search/:conversationId` | Search messages by keyword in a conversation |
-| `POST` | `/api/message/send/:conversationId`   | Send a text or image message                 |
+| Method | Endpoint                              | Description                                          |
+| ------ | ------------------------------------- | ---------------------------------------------------- |
+| `GET`  | `/api/message/:conversationId`        | Get paginated conversation history                   |
+| `GET`  | `/api/message/search/:conversationId` | Search messages by keyword in a conversation         |
+| `POST` | `/api/message/send/:conversationId`   | Send a message (text, image, or file attachment)     |
 
 ### Users
 
@@ -273,14 +339,13 @@ npm run dev
 
 ### WebSocket Events
 
-| Event              | Direction       | Payload                              |
-| ------------------ | --------------- | ------------------------------------ |
-| `newMessage`       | Server → Client | Message object                       |
-| `typingMessage`    | Client → Server | `{ senderId, receiverId, isTyping }` |
-| `typingMessageGet` | Server → Client | `{ senderId, receiverId, isTyping }` |
-| `getOnlineUsers`   | Server → Client | `string[]` of user IDs               |
-| `updatedUsers`     | Server → Client | Updated user list with last messages |
-| `messagesRead`     | Server → Client | `{ receiverId }`                     |
+| Event              | Direction       | Payload                                              |
+| ------------------ | --------------- | ---------------------------------------------------- |
+| `newMessage`       | Server → Client | Full message object (with attachment subdocument)    |
+| `typingMessage`    | Client → Server | `{ senderId, conversationId, isTyping }`             |
+| `typingMessageGet` | Server → Client | `{ senderId, conversationId, isTyping }`             |
+| `getOnlineUsers`   | Server → Client | `string[]` of online user IDs                        |
+| `joinConversation` | Client → Server | `conversationId` string                              |
 
 ---
 
