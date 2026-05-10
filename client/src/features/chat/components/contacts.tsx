@@ -4,6 +4,7 @@ import { conversationApi } from "@/store/api/conversationApi";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { conversationSlice } from "@/store/slices";
 import { useSocketContext } from "@/contexts/socket-context";
@@ -131,12 +132,12 @@ export default function Contacts({ mobileView }: Props) {
           <div className="space-y-2 p-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
+              <Input
                 type="text"
                 placeholder="Search conversations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-background py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-gray-50 pl-10 dark:border-gray-800 dark:bg-gray-900"
               />
             </div>
             <div className="flex gap-2">
@@ -161,10 +162,10 @@ export default function Contacts({ mobileView }: Props) {
                           )
                         }
                         className={cn(
-                          "flex cursor-pointer items-center space-x-4 rounded-lg p-2 transition-colors duration-200",
+                          "flex cursor-pointer items-center space-x-4 rounded-lg border p-2 transition-colors duration-200",
                           selectedConversation?._id === conv._id
-                            ? "bg-blue-500/10"
-                            : "hover:bg-gray-50 dark:hover:bg-blue-700/10",
+                            ? "border-blue-500/30 bg-blue-500/10"
+                            : "border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-blue-700/10",
                         )}
                       >
                         <div className="flex w-full justify-between px-2 py-1">
