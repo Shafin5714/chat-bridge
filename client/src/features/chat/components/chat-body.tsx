@@ -212,6 +212,7 @@ export default function Chat({ mobileView, setMobileView }: Props) {
         conversationId={selectedConversation?._id}
         onJumpToMessage={handleJumpToMessage}
         setMobileView={setMobileView}
+        lastSeen={otherUser?.lastSeen}
       />
       <Separator className="dark:bg-gray-700" />
       <ChatMessages

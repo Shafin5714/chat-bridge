@@ -6,6 +6,7 @@ export interface IUser extends Document {
   email: string;
   password?: string; // Optional because we might select('-password')
   profilePic?: string;
+  lastSeen?: Date;
   createdAt: Date;
   updatedAt: Date;
   matchPassword(enteredPassword: string): Promise<boolean>;
@@ -30,6 +31,9 @@ const userSchema = new Schema<IUser>(
     profilePic: {
       type: String,
       default: "",
+    },
+    lastSeen: {
+      type: Date,
     },
   },
   { timestamps: true }

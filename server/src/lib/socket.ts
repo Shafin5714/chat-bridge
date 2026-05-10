@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import logger from "../utils/logger";
 import Conversation from "../models/conversationModel";
+import User from "../models/userModel";
 
 const app = express();
 const server = http.createServer(app);
@@ -89,10 +90,16 @@ io.on("connection", async (socket: CustomSocket) => {
     });
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     logger.debug("User disconnected:", socket.id);
     if (userId) {
       delete userSocketMap[userId];
+      
+      try {
+        await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
+      } catch (err) {
+        logger.error("Failed to update lastSeen on disconnect", err);
+      }
     }
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });

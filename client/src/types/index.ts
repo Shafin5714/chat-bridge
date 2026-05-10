@@ -24,6 +24,7 @@ export type User = {
   name: string;
   email: string;
   profilePic?: string;
+  lastSeen?: string;
   createdAt?: string;
   updatedAt?: string;
 };

@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Users, User as UserIcon, Circle, ChevronLeft, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChatSearch from "./chat-search";
+import moment from "moment";
 
 type ChatHeaderProps = {
   conversationType?: "group" | "dm";
@@ -18,6 +19,7 @@ type ChatHeaderProps = {
   setMobileView: React.Dispatch<
     React.SetStateAction<"contacts" | "chat" | "media">
   >;
+  lastSeen?: string;
 };
 
 export default function ChatHeader({
@@ -31,6 +33,7 @@ export default function ChatHeader({
   conversationId,
   onJumpToMessage,
   setMobileView,
+  lastSeen,
 }: ChatHeaderProps) {
   return (
     <CardHeader className="relative h-16 px-4 py-3 shrink-0">
@@ -80,14 +83,16 @@ export default function ChatHeader({
                   ? "text-gray-500"
                   : isOnline
                     ? "text-green-500"
-                    : "text-red-600",
+                    : "text-gray-500",
               )}
             >
               {conversationType === "group"
                 ? `${memberCount} members`
                 : isOnline
                   ? "Online"
-                  : "Offline"}
+                  : lastSeen
+                    ? `Last seen ${moment(lastSeen).fromNow()}`
+                    : "Offline"}
             </p>
           </div>
         </div>
