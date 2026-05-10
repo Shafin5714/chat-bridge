@@ -1,4 +1,4 @@
-import { emptySplitApi } from "./emptySplitApi";
+import { emptySplitApi } from "./empty-split-api";
 
 export const userApi = emptySplitApi.injectEndpoints({
   endpoints: (builder) => ({

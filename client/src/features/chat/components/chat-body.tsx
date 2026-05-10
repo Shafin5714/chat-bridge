@@ -17,14 +17,14 @@ import {
   useSendMessageMutation,
   useGetMessagesQuery,
   useLazySearchMessagesQuery,
-} from "@/store/api/messageApi";
+} from "@/store/api/message-api";
 import imageCompression from "browser-image-compression";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { messageSlice } from "@/store/slices";
 import moment from "moment";
 import { cn } from "@/lib/utils";
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
-import type { Message, User } from "@/types";
+import type { Message } from "@/types";
 import { useChatSocket, useTypingIndicator, useInfiniteScroll } from "../hooks";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -75,7 +75,7 @@ export default function Chat({ mobileView }: Props) {
     conversationId === skipToken
       ? skipToken
       : { conversationId, ...paginationQuery };
-  const { data, refetch, isFetching } = useGetMessagesQuery(queryArgs, {
+  const { data, isFetching } = useGetMessagesQuery(queryArgs, {
     refetchOnMountOrArgChange: true,
   });
 
@@ -169,7 +169,6 @@ export default function Chat({ mobileView }: Props) {
   useChatSocket({
     selectedConversationId: selectedConversation?._id,
     onNewMessage: handleNewMessage,
-    refetch,
   });
 
   const { isTyping, typerNames } = useTypingIndicator({

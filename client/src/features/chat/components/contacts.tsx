@@ -1,6 +1,6 @@
 import { Card, CardHeader } from "@/components/ui/card";
-import { useGetConversationsQuery } from "@/store/api/conversationApi";
-import { conversationApi } from "@/store/api/conversationApi";
+import { useGetConversationsQuery } from "@/store/api/conversation-api";
+import { conversationApi } from "@/store/api/conversation-api";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";

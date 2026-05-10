@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { conversationApi } from "../api/conversationApi";
-import { authApi } from "../api/authApi";
+import { conversationApi } from "../api/conversation-api";
+import { authApi } from "../api/auth-api";
 import type { Conversation } from "@/types";
 
 type ConversationState = {

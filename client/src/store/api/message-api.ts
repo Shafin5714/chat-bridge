@@ -1,4 +1,4 @@
-import { emptySplitApi } from "./emptySplitApi";
+import { emptySplitApi } from "./empty-split-api";
 import type { Message, PaginatedMessagesResponse } from "@/types";
 
 export type SendMessageRequest = {

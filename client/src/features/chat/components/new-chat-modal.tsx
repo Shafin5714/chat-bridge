@@ -10,11 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MessageSquarePlus, User as UserIcon, Circle, Loader2 } from "lucide-react";
+import { MessageSquarePlus, User as UserIcon, Circle } from "lucide-react";
 import {
   useGetOrCreateDMMutation,
-  useGetConversationsQuery,
-} from "@/store/api/conversationApi";
+} from "@/store/api/conversation-api";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { conversationSlice } from "@/store/slices";
 import { toast } from "sonner";

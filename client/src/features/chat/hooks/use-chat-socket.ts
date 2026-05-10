@@ -1,13 +1,12 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { useAppDispatch } from "@/store";
 import { useSocketContext } from "@/contexts/socket-context";
-import { messageSlice, conversationSlice } from "@/store/slices";
+import { conversationSlice } from "@/store/slices";
 import type { Message, Conversation } from "@/types";
 
 type UseChatSocketOptions = {
   selectedConversationId: string | undefined;
   onNewMessage: (message: Message) => void;
-  refetch: () => void;
 };
 
 /**
@@ -17,7 +16,6 @@ type UseChatSocketOptions = {
 export function useChatSocket({
   selectedConversationId,
   onNewMessage,
-  refetch,
 }: UseChatSocketOptions) {
   const { socket } = useSocketContext();
   const dispatch = useAppDispatch();

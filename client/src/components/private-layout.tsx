@@ -3,7 +3,7 @@ import { ModeToggle } from "./mode-toggle";
 import { Outlet } from "react-router";
 import { Button } from "./ui/button";
 import { LogOut, User } from "lucide-react";
-import { useLogoutMutation } from "@/store/api/authApi";
+import { useLogoutMutation } from "@/store/api/auth-api";
 import { toast } from "sonner";
 import { useAppSelector } from "@/store";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";

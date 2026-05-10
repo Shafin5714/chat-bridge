@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { messageApi } from "../api/messageApi";
-import { authApi } from "../api/authApi";
+import { messageApi } from "../api/message-api";
+import { authApi } from "../api/auth-api";
 import type { Message } from "@/types";
 
 type MessageState = {

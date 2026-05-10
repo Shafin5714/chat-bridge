@@ -27,7 +27,7 @@ const baseQueryWithReauth: BaseQueryFn<
   const result = await baseQuery(args, api, extraOptions);
   if (result.error && result.error.status === 401) {
     // Lazy import to avoid circular dependency [for matchFulfilled in slice]
-    const { authSlice } = await import("../slices/authSlice");
+    const { authSlice } = await import("../slices/auth-slice");
     api.dispatch(authSlice.actions.logout());
   }
 

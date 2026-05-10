@@ -3,7 +3,7 @@ import { setupListeners } from "@reduxjs/toolkit/query";
 import { authSlice, userSlice, messageSlice, conversationSlice } from "./slices";
 
 // modules
-import { emptySplitApi } from "./api/emptySplitApi";
+import { emptySplitApi } from "./api/empty-split-api";
 export const store = configureStore({
   reducer: {
     auth: authSlice.reducer,

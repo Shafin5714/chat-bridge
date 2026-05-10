@@ -1,5 +1,5 @@
 // Pages
-export * from "./pages/Chat";
+export * from "./pages/chat";
 
 // Components
 export { default as ChatBody } from "./components/chat-body";

@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useRegisterMutation } from "@/store/api/authApi";
+import { useRegisterMutation } from "@/store/api/auth-api";
 import { authSlice } from "@/store/slices";
 import { toast } from "sonner";
 

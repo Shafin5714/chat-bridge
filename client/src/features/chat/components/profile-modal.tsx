@@ -24,8 +24,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { useUpdateProfileMutation } from "@/store/api/userApi";
-import { authSlice } from "@/store/slices/authSlice";
+import { useUpdateProfileMutation } from "@/store/api/user-api";
+import { authSlice } from "@/store/slices/auth-slice";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

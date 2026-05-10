@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useLoginMutation } from "@/store/api/authApi";
+import { useLoginMutation } from "@/store/api/auth-api";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import {

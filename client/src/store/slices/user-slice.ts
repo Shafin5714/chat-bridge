@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { authApi } from "../api/authApi";
+import { authApi } from "../api/auth-api";
 
 type UserState = {
   // Kept for potential future use but core user list is now in conversationSlice

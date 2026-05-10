@@ -1,4 +1,4 @@
-import { emptySplitApi } from "./emptySplitApi";
+import { emptySplitApi } from "./empty-split-api";
 
 type RegisterRequest = {
   name: string;
