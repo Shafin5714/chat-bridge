@@ -4,10 +4,11 @@ Chat Bridge relies heavily on `Socket.io` for real-time capabilities. This docum
 
 ## 🔒 Authentication
 
-All socket connections require a valid `jwt` token in the HTTP-only cookie during the initial handshake.
+All socket connections require a valid JWT token in the HTTP-only cookie during the initial handshake.
+The connection first checks for the short-lived `jwt` access token, and if expired, falls back to the `refreshToken`.
 
 ```javascript
-// Handshake is rejected if token is missing or invalid
+// Handshake is rejected if both tokens are missing or invalid
 const socket = io({
   withCredentials: true // Required to send cookies
 });

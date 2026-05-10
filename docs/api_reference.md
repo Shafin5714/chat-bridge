@@ -15,6 +15,7 @@ All auth responses set or clear an HTTP-only `jwt` cookie.
 | `POST` | `/register` | Public | Register a new user | `{ name, email, password }` |
 | `POST` | `/login` | Public | Authenticate a user | `{ email, password }` |
 | `POST` | `/logout` | Public | Clear auth cookie | None |
+| `POST` | `/refresh` | Public | Rotate JWT tokens | None |
 
 ---
 
@@ -38,7 +39,7 @@ All auth responses set or clear an HTTP-only `jwt` cookie.
 |--------|----------|------------|-------------|------------|
 | `GET` | `/:conversationId` | Private | Get paginated messages | `?cursor=id&limit=30` |
 | `GET` | `/search/:conversationId`| Private | Keyword search | `?q=hello` |
-| `POST` | `/send/:conversationId` | Private | Send a new message | `{ text, image }` |
+| `POST` | `/send/:conversationId` | Private | Send a new message | `{ text, image, attachment }` |
 
 ---
 

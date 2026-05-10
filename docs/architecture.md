@@ -25,6 +25,7 @@ The client heavily utilizes RTK Query to eliminate manual `useEffect` loading st
 - `userApi`: Manages auth state and global user fetching.
 - `conversationApi`: Caches chat lists. Optimistically updates when a new message arrives via socket.
 - `messageApi`: Handles infinite scrolling and message dispatching.
+- `emptySplitApi`: Uses `baseQueryWithReauth` to automatically intercept 401 Unauthorized errors and silently rotate JWT tokens via the refresh endpoint before retrying the failed request.
 
 ## ⚙️ Server (Backend)
 - **Runtime:** Node.js (with `tsx` for development execution)
@@ -42,14 +43,18 @@ server/src/
 ├── models/       # Strictly typed Mongoose schemas
 ├── routes/       # API route definitions
 ├── types/        # Global TypeScript augmentations (e.g., Express Request)
-└── utils/        # Helper functions
+├── utils/        # Helper functions
+└── validators/   # Zod schema definitions for request validation
 ```
 
 ## 🔐 Security Model
 1. **Authentication:** 
-   - Managed via HTTP-Only, Secure JWT cookies.
+   - Managed via dual HTTP-Only, Secure cookies (short-lived access token + long-lived refresh token).
+   - Refresh tokens are hashed via bcrypt and stored in MongoDB to allow server-side revocation on logout.
    - The frontend never touches the raw JWT string, protecting against XSS.
 2. **WebSockets:** 
-   - The socket handshake strictly parses and verifies the JWT cookie before accepting the connection.
+   - The socket handshake strictly parses and verifies the access token (with a fallback to the refresh token) before accepting the connection.
 3. **Protection:** 
+   - `helmet` adds production-ready HTTP security headers (CSP, HSTS).
    - `express-rate-limit` prevents brute force and API spamming.
+   - `xss` library sanitizes raw user inputs.
