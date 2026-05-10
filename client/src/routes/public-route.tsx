@@ -1,8 +1,8 @@
-import { useAppSelector } from "@/store";
+import { useAuth } from "@/features/auth/hooks";
 import { Navigate, Outlet } from "react-router";
 
 export const PublicRoute = () => {
-  const { userInfo } = useAppSelector((store) => store.auth);
+  const { isAuthenticated } = useAuth();
 
-  return userInfo ? <Navigate to="/" /> : <Outlet />;
+  return isAuthenticated ? <Navigate to="/" /> : <Outlet />;
 };

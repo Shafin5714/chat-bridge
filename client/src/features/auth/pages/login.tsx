@@ -1,17 +1,8 @@
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import {
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
+import { CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { useLoginMutation } from "@/store/api/auth-api";
-import { useNavigate } from "react-router";
-import { toast } from "sonner";
 import {
   Form,
   FormControl,
@@ -20,46 +11,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-const formSchema = z.object({
-  email: z.string().min(1, { message: "Email is required." }).email({
-    message: "Please enter a valid email address.",
-  }),
-  password: z
-    .string()
-    .min(1, {
-      message: "Password is required.",
-    })
-    .min(6, {
-      message: "Password must be at least 6 characters.",
-    }),
-});
-
 import { AuthLayout, AuthHeader } from "../components";
+import { useLoginForm } from "../hooks";
 
 export function Login() {
-  // hooks
-  const navigate = useNavigate();
-
-  // api
-  const [login, { isLoading }] = useLoginMutation();
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const { email, password } = values;
-    const res = await login({ email, password }).unwrap();
-    if (res.success) {
-      toast.success(res.message);
-      navigate("/");
-    }
-  };
+  const { form, onSubmit, isLoading } = useLoginForm();
 
   return (
     <AuthLayout>

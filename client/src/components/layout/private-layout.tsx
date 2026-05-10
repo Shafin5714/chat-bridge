@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { LogOut, User } from "lucide-react";
 import { useLogoutMutation } from "@/store/api/auth-api";
 import { toast } from "sonner";
-import { useAppSelector } from "@/store";
+import { useAuth } from "@/features/auth/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileModal } from "@/features/chat/components/profile-modal";
 
 export default function PrivateLayout() {
-  const { userInfo } = useAppSelector((state) => state.auth);
+  const { userInfo } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
 
   // api

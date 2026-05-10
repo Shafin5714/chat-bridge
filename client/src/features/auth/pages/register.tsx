@@ -1,19 +1,8 @@
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import {
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { useNavigate } from "react-router";
+import { CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { useRegisterMutation } from "@/store/api/auth-api";
-import { authSlice } from "@/store/slices";
-import { toast } from "sonner";
-
 import {
   Form,
   FormControl,
@@ -22,69 +11,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useAppDispatch } from "@/store";
 import { AuthLayout, AuthHeader } from "../components";
-
-const formSchema = z
-  .object({
-    name: z.string().min(1, { message: "Name is required." }).min(2, {
-      message: "Name must be at least 2 characters.",
-    }),
-    email: z.string().min(1, { message: "Email is required." }).email({
-      message: "Please enter a valid email address.",
-    }),
-    password: z.string().min(1, "Password is required.").min(6, {
-      message: "Password must be at least 6 characters.",
-    }),
-    confirmPassword: z.string().min(1, "Password is required.").min(6, {
-      message: "Password must be at least 6 characters.",
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
-  });
+import { useRegisterForm } from "../hooks";
 
 export function Register() {
-  // hooks
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-
-  // apis
-  const [registerUser, { isLoading }] = useRegisterMutation();
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
-  });
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const { name, email, password } = values;
-    const res = await registerUser({
-      name,
-      email,
-      password,
-    }).unwrap();
-
-    if (res.success) {
-      const { id, name, email } = res.data;
-
-      dispatch(
-        authSlice.actions.setCredentials({
-          id,
-          name,
-          email,
-        }),
-      );
-      toast.success(res.message);
-      navigate("/");
-    }
-  };
+  const { form, onSubmit, isLoading } = useRegisterForm();
 
   return (
     <AuthLayout>

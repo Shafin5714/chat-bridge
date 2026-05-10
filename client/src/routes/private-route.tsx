@@ -1,9 +1,9 @@
 import { Navigate } from "react-router";
 import PrivateLayout from "@/components/layout/private-layout";
-import { useAppSelector } from "@/store";
+import { useAuth } from "@/features/auth/hooks";
 
 export const PrivateRoute = () => {
-  const { userInfo } = useAppSelector((store) => store.auth);
+  const { isAuthenticated } = useAuth();
 
-  return userInfo ? <PrivateLayout /> : <Navigate to="/login" />;
+  return isAuthenticated ? <PrivateLayout /> : <Navigate to="/login" />;
 };
