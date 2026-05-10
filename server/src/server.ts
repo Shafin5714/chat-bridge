@@ -8,8 +8,12 @@ import routes from "./routes/index";
 import { connectDB } from "./config/db";
 import { server, app } from "./lib/socket";
 import morgan from "morgan";
+import helmet from "helmet";
 
 dotenv.config();
+
+// Use Helmet for production-ready security headers
+app.use(helmet());
 
 // accept json data in body (increasing limit to 10mb)
 app.use(express.json({ limit: "10mb" }));
