@@ -36,14 +36,29 @@ io.use((socket: CustomSocket, next) => {
       return next(new Error("Authentication error: No cookies"));
     }
 
-    const tokenMatch = cookieHeader.match(/jwt=([^;]+)/);
-    const token = tokenMatch ? tokenMatch[1] : null;
+    // Try the short-lived access token first
+    const accessTokenMatch = cookieHeader.match(/jwt=([^;]+)/);
+    const accessToken = accessTokenMatch ? accessTokenMatch[1] : null;
 
-    if (!token) {
-      return next(new Error("Authentication error: No token"));
+    if (accessToken) {
+      try {
+        const decoded = jwt.verify(accessToken, process.env.JWT_SECRET as string) as { userId: string };
+        socket.userId = decoded.userId;
+        return next();
+      } catch {
+        // Access token expired — fall through to refresh token
+      }
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
+    // Fall back to the long-lived refresh token
+    const refreshTokenMatch = cookieHeader.match(/refreshToken=([^;]+)/);
+    const refreshToken = refreshTokenMatch ? refreshTokenMatch[1] : null;
+
+    if (!refreshToken) {
+      return next(new Error("Authentication error: No valid token"));
+    }
+
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET as string) as { userId: string };
     socket.userId = decoded.userId;
     next();
   } catch (err: unknown) {

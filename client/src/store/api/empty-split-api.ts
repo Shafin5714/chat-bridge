@@ -24,19 +24,37 @@ const baseQueryWithReauth: BaseQueryFn<
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-  const result = await baseQuery(args, api, extraOptions);
+  let result = await baseQuery(args, api, extraOptions);
+
   if (result.error && result.error.status === 401) {
-    // Lazy import to avoid circular dependency [for matchFulfilled in slice]
-    const { authSlice } = await import("../slices/auth-slice");
-    api.dispatch(authSlice.actions.logout());
+    // Attempt to refresh the access token
+    const refreshResult = await baseQuery(
+      { url: "/auth/refresh", method: "POST" },
+      api,
+      extraOptions
+    );
+
+    if (refreshResult.data) {
+      // Refresh succeeded — retry the original request
+      result = await baseQuery(args, api, extraOptions);
+    } else {
+      // Refresh failed — session is truly expired
+      const { authSlice } = await import("../slices/auth-slice");
+      api.dispatch(authSlice.actions.logout());
+    }
   }
 
   if (result.error) {
-    console.error((result.error as CustomError).data.message);
-    toast.error((result.error as CustomError).data.message);
+    const err = result.error as CustomError;
+    if (err.data?.message) {
+      console.error(err.data.message);
+      toast.error(err.data.message);
+    }
   }
+
   return result;
 };
+
 export const emptySplitApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ["Users", "Message", "Conversations"],

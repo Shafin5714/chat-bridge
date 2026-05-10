@@ -7,6 +7,7 @@ export interface IUser extends Document {
   password?: string; // Optional because we might select('-password')
   profilePic?: string;
   lastSeen?: Date;
+  refreshToken?: string; // Hashed refresh token for token rotation
   createdAt: Date;
   updatedAt: Date;
   matchPassword(enteredPassword: string): Promise<boolean>;
@@ -34,6 +35,9 @@ const userSchema = new Schema<IUser>(
     },
     lastSeen: {
       type: Date,
+    },
+    refreshToken: {
+      type: String,
     },
   },
   { timestamps: true }
